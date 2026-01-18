@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 
 const shortcuts = [
   { keys: ['⌘/Ctrl', 'S'], action: 'Format' },

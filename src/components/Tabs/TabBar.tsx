@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react';
 import { Tab } from '@/types';
 import { TabItem } from './TabItem';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 
 interface TabBarProps {
   tabs: Tab[];
