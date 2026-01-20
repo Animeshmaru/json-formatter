@@ -6,11 +6,11 @@ import {
   Share2,
   Minimize2,
   Maximize2,
-  FileJson,
   Check,
   Settings2,
   Moon,
   Sun,
+  Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -74,10 +74,9 @@ export function EditorToolbar({
         disabled={!hasContent}
         className="gap-1.5 text-xs font-medium"
       >
-        <FileJson className="h-4 w-4" />
+        <Wand2 className="h-4 w-4 text-primary" />
         Format
       </Button>
-
       <Button
         variant="ghost"
         size="sm"
@@ -85,7 +84,11 @@ export function EditorToolbar({
         disabled={!hasContent || !isValid}
         className="gap-1.5 text-xs font-medium"
       >
-        {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+        {copied ? (
+          <Check className="h-4 w-4 text-success" />
+        ) : (
+          <Copy className="h-4 w-4 text-primary" />
+        )}
         Copy
       </Button>
 
@@ -98,26 +101,21 @@ export function EditorToolbar({
       >
         {isMinified ? (
           <>
-            <Maximize2 className="h-4 w-4" />
+            <Maximize2 className="h-4 w-4 text-primary" />
             Expand
           </>
         ) : (
           <>
-            <Minimize2 className="h-4 w-4" />
+            <Minimize2 className="h-4 w-4 text-primary" />
             Minify
           </>
         )}
       </Button>
 
-      <div className="h-4 w-px bg-border mx-1" />
+      <div className="h-4 w-[2px] bg-border mx-1" />
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onUpload}
-        className="gap-1.5 text-xs font-medium"
-      >
-        <Upload className="h-4 w-4" />
+      <Button variant="ghost" size="sm" onClick={onUpload} className="gap-1.5 text-xs font-medium">
+        <Upload className="h-4 w-4 text-primary" />
         Upload
       </Button>
 
@@ -128,7 +126,7 @@ export function EditorToolbar({
         disabled={!hasContent || !isValid}
         className="gap-1.5 text-xs font-medium"
       >
-        <Download className="h-4 w-4" />
+        <Download className="h-4 w-4 text-primary" />
         Download
       </Button>
 
@@ -139,7 +137,7 @@ export function EditorToolbar({
         disabled={!hasContent || !isValid}
         className="gap-1.5 text-xs font-medium"
       >
-        <Share2 className="h-4 w-4" />
+        <Share2 className="h-4 w-4 text-primary" />
         Share
       </Button>
 
@@ -159,14 +157,12 @@ export function EditorToolbar({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => onPreferencesChange({ theme: preferences.theme === 'dark' ? 'light' : 'dark' })}
+        onClick={() =>
+          onPreferencesChange({ theme: preferences.theme === 'dark' ? 'light' : 'dark' })
+        }
         className="h-8 w-8"
       >
-        {preferences.theme === 'dark' ? (
-          <Sun className="h-4 w-4" />
-        ) : (
-          <Moon className="h-4 w-4" />
-        )}
+        {preferences.theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </Button>
 
       <DropdownMenu>
@@ -175,14 +171,26 @@ export function EditorToolbar({
             <Settings2 className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuLabel>Indent Size</DropdownMenuLabel>
+        <DropdownMenuContent align="end" className="w-52 bg-card border border-border shadow-md">
+          <DropdownMenuLabel className="text-muted-foreground text-xs font-semibold">
+            Indent Size
+          </DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={`${preferences.indentSize}`}
             onValueChange={(v) => onPreferencesChange({ indentSize: parseInt(v) as 2 | 4 })}
           >
-            <DropdownMenuRadioItem value="2">2 spaces</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="4">4 spaces</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem
+              value="2"
+              className="focus:text-primary focus:bg-secondary focus:bg-secondary"
+            >
+              2 spaces
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem
+              value="4"
+              className="focus:text-primary focus:bg-secondary focus:bg-secondary"
+            >
+              4 spaces
+            </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>Indent Type</DropdownMenuLabel>
@@ -190,11 +198,24 @@ export function EditorToolbar({
             value={preferences.indentType}
             onValueChange={(v) => onPreferencesChange({ indentType: v as 'spaces' | 'tabs' })}
           >
-            <DropdownMenuRadioItem value="spaces">Spaces</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="tabs">Tabs</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem
+              value="spaces"
+              className="focus:text-primary focus:bg-secondary focus:bg-secondary"
+            >
+              Spaces
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem
+              value="tabs"
+              className="focus:text-primary focus:bg-secondary focus:bg-secondary"
+            >
+              Tabs
+            </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onPreferencesChange({ autoFormat: !preferences.autoFormat })}>
+          <DropdownMenuItem
+            onClick={() => onPreferencesChange({ autoFormat: !preferences.autoFormat })}
+            className="focus:text-primary focus:bg-secondary focus:bg-secondary"
+          >
             {preferences.autoFormat ? '✓ ' : ''}Auto-format on paste
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -42,7 +42,13 @@ export function TabBar({
         variant="ghost"
         size="icon"
         onClick={onAddTab}
-        className="h-9 w-9 mx-1 flex-shrink-0"
+        className="
+          h-8 w-8 mx-2
+          text-muted-foreground
+          hover:text-foreground
+          hover:bg-secondary
+          flex-shrink-0
+        "
         title="New tab (Ctrl/Cmd + T)"
       >
         <Plus className="h-4 w-4" />

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, FileJson } from 'lucide-react';
+import { X, Code } from 'lucide-react';
 import { Tab } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -62,12 +62,7 @@ export function TabItem({ tab, isActive, onSelect, onClose, onRename }: TabItemP
           : 'bg-muted text-muted-foreground hover:bg-secondary hover:text-secondary-foreground border-t-2 border-t-transparent'
       )}
     >
-      <FileJson
-        className={cn(
-          'h-4 w-4 flex-shrink-0',
-          !tab.isValid && 'text-destructive'
-        )}
-      />
+      <Code className={cn('h-4 w-4 flex-shrink-0', !tab.isValid && 'text-destructive')} />
       {isEditing ? (
         <input
           ref={inputRef}
