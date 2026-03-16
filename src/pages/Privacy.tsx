@@ -1,8 +1,17 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Shield, Server, Eye, Cookie, Wifi, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Privacy = () => {
+  useEffect(() => {
+    const prev = document.title;
+    document.title = 'Privacy Policy — Multi JSON Formatter';
+    return () => {
+      document.title = prev;
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-12">
@@ -93,8 +102,8 @@ const Privacy = () => {
         <div className="mt-8 p-4 rounded-lg bg-muted text-center">
           <p className="text-sm text-muted-foreground">
             <strong className="text-foreground">Summary:</strong> We can't see your data because we
-            literally have no way to receive it. This is a static, client-side application with
-            zero backend infrastructure.
+            literally have no way to receive it. This is a static, client-side application with zero
+            backend infrastructure.
           </p>
         </div>
       </div>

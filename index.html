@@ -3,20 +3,120 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JSON Formatter - Fast, Private, Offline</title>
-    <meta name="description" content="A lightweight, privacy-first JSON formatter and validator. Format, validate, and share JSON instantly. Works completely offline with no tracking." />
-    <meta name="keywords" content="JSON formatter, JSON validator, JSON beautifier, JSON minifier, developer tools, offline JSON" />
-    <meta name="author" content="JSON Formatter" />
 
-    <meta property="og:title" content="JSON Formatter - Fast, Private, Offline" />
-    <meta property="og:description" content="A lightweight, privacy-first JSON formatter and validator. Works completely offline." />
+    <!-- Primary Meta Tags -->
+    
+    <title>JSON Formatter & Validator Online — Free, Fast &amp; Private</title>
+    <meta name="title" content="JSON Formatter & Validator Online — Free, Fast &amp; Private" />
+    <meta name="description" content="Free online JSON formatter, validator &amp; beautifier. Instantly format, validate, minify and share JSON across multiple tabs. 100% client-side — your data never leaves your browser. Works offline." />
+    <meta name="keywords" content="json formatter, json validator, json beautifier, json minifier, format json online, json pretty print, json parser, online json tool, json editor, json viewer, offline json formatter, developer tools, free json tool" />
+    <meta name="author" content="Multi JSON Formatter" />
+    <meta name="application-name" content="Multi JSON Formatter" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="canonical" href="https://multijson.com/" />
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://multijson.com/" />
+    <meta property="og:site_name" content="Multi JSON Formatter" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="JSON Formatter & Validator Online — Free, Fast &amp; Private" />
+    <meta property="og:description" content="Free online JSON formatter, validator &amp; beautifier. Multi-tab editing, error detection, minify, share. 100% client-side. Works offline." />
+    <meta property="og:image" content="https://multijson.com/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Multi JSON Formatter – fast, private, offline JSON tool" />
 
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="JSON Formatter - Fast, Private, Offline" />
-    <meta name="twitter:description" content="A lightweight, privacy-first JSON formatter and validator. Works completely offline." />
+    <meta name="twitter:url" content="https://multijson.com/" />
+    <meta name="twitter:title" content="JSON Formatter & Validator Online — Free, Fast &amp; Private" />
+    <meta name="twitter:description" content="Free online JSON formatter, validator &amp; beautifier. Multi-tab editing, error detection, minify, share. 100% client-side. Works offline." />
+    <meta name="twitter:image" content="https://multijson.com/og-image.svg" />
 
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v4a2 2 0 0 0 2 2h4'/%3E%3Cpath d='M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1'/%3E%3Cpath d='M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1'/%3E%3C/svg%3E" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://multijson.com/#app",
+          "name": "Multi JSON Formatter",
+          "url": "https://multijson.com/",
+          "description": "Free online JSON formatter, validator and beautifier. Format, validate, minify and share JSON instantly. Works 100% client-side with no data ever leaving your browser.",
+          "applicationCategory": "DeveloperApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires a modern web browser with JavaScript enabled",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "featureList": [
+            "JSON formatting and pretty-printing",
+            "Real-time JSON validation with error highlighting",
+            "JSON minification",
+            "Multi-tab JSON editing",
+            "Shareable JSON URLs",
+            "File upload and download",
+            "Offline support",
+            "No data collection or tracking"
+          ],
+          "screenshot": "https://multijson.com/og-image.svg"
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is a JSON formatter?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A JSON formatter (also called a JSON beautifier or pretty printer) takes raw or minified JSON text and formats it with proper indentation and line breaks, making it easy to read and understand."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is my JSON data safe?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. This tool runs entirely in your browser. Your JSON data never leaves your device — there is no server, no analytics, and no tracking of any kind."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does this JSON formatter work offline?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Once the page is loaded, all features work completely offline. You can disconnect from the internet and continue formatting, validating, and editing JSON without any limitations."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I validate JSON?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Paste your JSON into the editor. The tool validates it in real time as you type. If your JSON is invalid, the exact error location (line and column) is shown so you can fix it quickly."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I format multiple JSON files at once?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Use the multi-tab interface to open and work on multiple JSON documents simultaneously. Each tab maintains its own state independently."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
 
   <body>

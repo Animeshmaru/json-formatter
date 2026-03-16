@@ -10,7 +10,12 @@ import { useTabs } from '@/hooks/useTabs';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { validateAndFormatJson, minifyJson } from '@/utils/jsonFormatter';
 import { downloadJson, uploadJsonFile } from '@/utils/fileHandler';
-import { createShareableUrl, getJsonFromUrl, copyToClipboard, clearUrlParams } from '@/utils/shareUrl';
+import {
+  createShareableUrl,
+  getJsonFromUrl,
+  copyToClipboard,
+  clearUrlParams,
+} from '@/utils/shareUrl';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -41,7 +46,11 @@ const Index = () => {
 
     const jsonFromUrl = getJsonFromUrl();
     if (jsonFromUrl) {
-      const result = validateAndFormatJson(jsonFromUrl, preferences.indentSize, preferences.indentType);
+      const result = validateAndFormatJson(
+        jsonFromUrl,
+        preferences.indentSize,
+        preferences.indentType
+      );
       if (result.isValid && result.formattedJson) {
         addTab('Shared JSON', result.formattedJson);
         clearUrlParams();
@@ -62,7 +71,11 @@ const Index = () => {
 
       debounceRef.current = setTimeout(() => {
         if (preferences.autoFormat && value.trim()) {
-          const result = validateAndFormatJson(value, preferences.indentSize, preferences.indentType);
+          const result = validateAndFormatJson(
+            value,
+            preferences.indentSize,
+            preferences.indentType
+          );
           if (result.isValid && result.formattedJson) {
             updateTabContent(activeTabId, result.formattedJson, true);
             setIsMinified(false);
@@ -74,7 +87,13 @@ const Index = () => {
         }
       }, 300);
     },
-    [activeTabId, preferences.autoFormat, preferences.indentSize, preferences.indentType, updateTabContent]
+    [
+      activeTabId,
+      preferences.autoFormat,
+      preferences.indentSize,
+      preferences.indentType,
+      updateTabContent,
+    ]
   );
 
   const handleFormat = useCallback(() => {
@@ -162,14 +181,22 @@ const Index = () => {
         preferences={preferences}
         onPreferencesChange={updatePreferences}
       />
-      <div className="flex-1 min-h-0 w-full">
-        <JsonEditor
-          value={activeTab.content}
-          onChange={handleEditorChange}
-          theme={preferences.theme}
-          isValid={activeTab.isValid}
-        />
-      </div>
+      <main className="flex-1 min-h-0 w-full flex flex-col" aria-label="JSON editor">
+        {/* SEO: descriptive text for crawlers, visually hidden */}
+        <p className="sr-only">
+          Free online JSON formatter and validator. Paste or type your JSON to instantly format,
+          validate, minify, and share it. Multi-tab editing, real-time error detection, file upload
+          and download. All processing happens in your browser — no data is ever sent to a server.
+        </p>
+        <div className="flex-1 min-h-0">
+          <JsonEditor
+            value={activeTab.content}
+            onChange={handleEditorChange}
+            theme={preferences.theme}
+            isValid={activeTab.isValid}
+          />
+        </div>
+      </main>
       {activeTab.error && <ErrorDisplay error={activeTab.error} />}
       <StatusBar isValid={activeTab.isValid} charCount={charCount} lineCount={lineCount} />
       <Footer />
