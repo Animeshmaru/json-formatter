@@ -15,6 +15,9 @@ const createDefaultTab = (): Tab => ({
   content: '',
   isValid: true,
   error: null,
+  isDiffMode: false,
+  diffLeft: '',
+  diffRight: '',
 });
 
 export function getStoredState(): AppState {
@@ -28,6 +31,13 @@ export function getStoredState(): AppState {
         state.tabs = [defaultTab];
         state.activeTabId = defaultTab.id;
       }
+      // Backfill new diff fields on tabs loaded from older storage
+      state.tabs = state.tabs.map((t) => ({
+        ...t,
+        isDiffMode: t.isDiffMode ?? false,
+        diffLeft: t.diffLeft ?? '',
+        diffRight: t.diffRight ?? '',
+      }));
       // Merge stored preferences with defaults for new fields
       state.preferences = { ...defaultPreferences, ...state.preferences };
       return state;
@@ -35,7 +45,7 @@ export function getStoredState(): AppState {
   } catch (e) {
     console.error('Failed to load state from localStorage:', e);
   }
-  
+
   const defaultTab = createDefaultTab();
   return {
     tabs: [defaultTab],

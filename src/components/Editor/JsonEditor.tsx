@@ -8,9 +8,10 @@ interface JsonEditorProps {
   onChange: (value: string) => void;
   theme: 'dark' | 'light';
   isValid: boolean;
+  tabId: string;
 }
 
-export function JsonEditor({ value, onChange, theme, isValid }: JsonEditorProps) {
+export function JsonEditor({ value, onChange, theme, isValid, tabId }: JsonEditorProps) {
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
 
   const handleEditorDidMount: OnMount = useCallback((editor) => {
@@ -40,6 +41,7 @@ export function JsonEditor({ value, onChange, theme, isValid }: JsonEditorProps)
         <MonacoEditor
           height="100%"
           defaultLanguage="json"
+          path={`tab-${tabId}.json`}
           value={value}
           onChange={handleChange}
           onMount={handleEditorDidMount}

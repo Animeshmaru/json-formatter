@@ -4,6 +4,9 @@ export interface Tab {
   content: string;
   isValid: boolean;
   error: string | null;
+  isDiffMode: boolean;
+  diffLeft: string;
+  diffRight: string;
 }
 
 export interface EditorPreferences {

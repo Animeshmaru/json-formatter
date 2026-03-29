@@ -11,6 +11,7 @@ import {
   Moon,
   Sun,
   Wand2,
+  GitCompareArrows,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +41,8 @@ interface EditorToolbarProps {
   hasContent: boolean;
   preferences: EditorPreferences;
   onPreferencesChange: (updates: Partial<EditorPreferences>) => void;
+  isDiffMode: boolean;
+  onToggleDiffMode: () => void;
 }
 
 export function EditorToolbar({
@@ -55,6 +58,8 @@ export function EditorToolbar({
   hasContent,
   preferences,
   onPreferencesChange,
+  isDiffMode,
+  onToggleDiffMode,
 }: EditorToolbarProps) {
   const [copied, setCopied] = useState(false);
 
@@ -150,6 +155,20 @@ export function EditorToolbar({
       >
         <Trash2 className="h-4 w-4" />
         Clear
+      </Button>
+
+      <div className="h-4 w-[2px] bg-border mx-1" />
+
+      <Button
+        variant={isDiffMode ? 'secondary' : 'ghost'}
+        size="sm"
+        onClick={onToggleDiffMode}
+        className={`gap-1.5 text-xs font-medium ${
+          isDiffMode ? 'bg-primary/15 text-primary border border-primary/30' : ''
+        }`}
+      >
+        <GitCompareArrows className="h-4 w-4 text-primary" />
+        Diff
       </Button>
 
       <div className="flex-1" />

@@ -9,6 +9,9 @@ const createNewTab = (name: string = 'Untitled', content: string = ''): Tab => (
   content,
   isValid: true,
   error: null,
+  isDiffMode: false,
+  diffLeft: '',
+  diffRight: '',
 });
 
 export function useTabs() {
@@ -24,23 +27,30 @@ export function useTabs() {
     document.documentElement.classList.toggle('dark', state.preferences.theme === 'dark');
   }, [state.preferences.theme]);
 
-  const addTab = useCallback((name?: string, content?: string) => {
-    const newTab = createNewTab(name, content);
-    if (content) {
-      const result = validateAndFormatJson(content, state.preferences.indentSize, state.preferences.indentType);
-      newTab.isValid = result.isValid;
-      newTab.error = result.error;
-      if (result.formattedJson !== null) {
-        newTab.content = result.formattedJson;
+  const addTab = useCallback(
+    (name?: string, content?: string) => {
+      const newTab = createNewTab(name, content);
+      if (content) {
+        const result = validateAndFormatJson(
+          content,
+          state.preferences.indentSize,
+          state.preferences.indentType
+        );
+        newTab.isValid = result.isValid;
+        newTab.error = result.error;
+        if (result.formattedJson !== null) {
+          newTab.content = result.formattedJson;
+        }
       }
-    }
-    setState((prev) => ({
-      ...prev,
-      tabs: [...prev.tabs, newTab],
-      activeTabId: newTab.id,
-    }));
-    return newTab.id;
-  }, [state.preferences.indentSize, state.preferences.indentType]);
+      setState((prev) => ({
+        ...prev,
+        tabs: [...prev.tabs, newTab],
+        activeTabId: newTab.id,
+      }));
+      return newTab.id;
+    },
+    [state.preferences.indentSize, state.preferences.indentType]
+  );
 
   const closeTab = useCallback((tabId: string) => {
     setState((prev) => {
@@ -52,7 +62,7 @@ export function useTabs() {
 
       const tabIndex = prev.tabs.findIndex((t) => t.id === tabId);
       const newTabs = prev.tabs.filter((t) => t.id !== tabId);
-      
+
       let newActiveId = prev.activeTabId;
       if (prev.activeTabId === tabId) {
         // Select the previous tab, or the first if we closed the first tab
@@ -75,31 +85,34 @@ export function useTabs() {
   const renameTab = useCallback((tabId: string, newName: string) => {
     setState((prev) => ({
       ...prev,
-      tabs: prev.tabs.map((t) =>
-        t.id === tabId ? { ...t, name: newName || 'Untitled' } : t
-      ),
+      tabs: prev.tabs.map((t) => (t.id === tabId ? { ...t, name: newName || 'Untitled' } : t)),
     }));
   }, []);
 
-  const updateTabContent = useCallback((tabId: string, content: string, validate: boolean = true) => {
-    setState((prev) => {
-      let isValid = true;
-      let error: string | null = null;
+  const updateTabContent = useCallback(
+    (tabId: string, content: string, validate: boolean = true) => {
+      setState((prev) => {
+        let isValid = true;
+        let error: string | null = null;
 
-      if (validate && content.trim()) {
-        const result = validateAndFormatJson(content, prev.preferences.indentSize, prev.preferences.indentType);
-        isValid = result.isValid;
-        error = result.error;
-      }
+        if (validate && content.trim()) {
+          const result = validateAndFormatJson(
+            content,
+            prev.preferences.indentSize,
+            prev.preferences.indentType
+          );
+          isValid = result.isValid;
+          error = result.error;
+        }
 
-      return {
-        ...prev,
-        tabs: prev.tabs.map((t) =>
-          t.id === tabId ? { ...t, content, isValid, error } : t
-        ),
-      };
-    });
-  }, []);
+        return {
+          ...prev,
+          tabs: prev.tabs.map((t) => (t.id === tabId ? { ...t, content, isValid, error } : t)),
+        };
+      });
+    },
+    []
+  );
 
   const formatActiveTab = useCallback(() => {
     setState((prev) => {
@@ -154,6 +167,25 @@ export function useTabs() {
     }));
   }, []);
 
+  const toggleDiffMode = useCallback((tabId: string) => {
+    setState((prev) => ({
+      ...prev,
+      tabs: prev.tabs.map((t) => (t.id === tabId ? { ...t, isDiffMode: !t.isDiffMode } : t)),
+    }));
+  }, []);
+
+  const updateDiffContent = useCallback(
+    (tabId: string, side: 'left' | 'right', content: string) => {
+      setState((prev) => ({
+        ...prev,
+        tabs: prev.tabs.map((t) =>
+          t.id === tabId ? { ...t, [side === 'left' ? 'diffLeft' : 'diffRight']: content } : t
+        ),
+      }));
+    },
+    []
+  );
+
   const updatePreferences = useCallback((updates: Partial<EditorPreferences>) => {
     setState((prev) => ({
       ...prev,
@@ -177,5 +209,7 @@ export function useTabs() {
     duplicateTab,
     clearActiveTab,
     updatePreferences,
+    toggleDiffMode,
+    updateDiffContent,
   };
 }
