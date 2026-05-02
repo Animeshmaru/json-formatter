@@ -56,10 +56,10 @@ export function TabItem({ tab, isActive, onSelect, onClose, onRename }: TabItemP
       onDoubleClick={handleDoubleClick}
       className={cn(
         'group flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors relative',
-        'min-w-[100px] max-w-[180px]',
+        'min-w-[100px] max-w-[180px] rounded-t-md mx-0.5',
         isActive
-          ? 'bg-card text-foreground border-t-2 border-t-primary'
-          : 'bg-muted text-muted-foreground hover:bg-secondary hover:text-secondary-foreground border-t-2 border-t-transparent'
+          ? 'bg-card text-foreground border-2 border-border border-b-card'
+          : 'bg-muted text-muted-foreground hover:bg-secondary hover:text-secondary-foreground border-2 border-border/50 border-b-transparent'
       )}
     >
       <Code className={cn('h-4 w-4 flex-shrink-0', !tab.isValid && 'text-destructive')} />

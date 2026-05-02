@@ -19,23 +19,7 @@ export function Footer() {
       <div className="flex items-center gap-4">
         <span>100% client-side • No data leaves your browser</span>
       </div>
-      <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
-        <div className="group flex items-center gap-1 cursor-default">
-          <span>Made with</span>
-          <span
-            className="
-              text-red-500
-              transition-transform duration-400
-              ease-[cubic-bezier(0.16,1,0.3,1)]
-              group-hover:scale-125
-              group-hover:text-red-500
-            "
-          >
-            ❤️
-          </span>
-          <span>by Aniimesh</span>
-        </div>
-      </div>
+      
       <Tooltip open={open} onOpenChange={setOpen} delayDuration={200}>
         <TooltipTrigger asChild>
           <Button

@@ -34,6 +34,7 @@ const Index = () => {
     duplicateTab,
     clearActiveTab,
     updatePreferences,
+    reorderTabs,
     toggleDiffMode,
     updateDiffContent,
   } = useTabs();
@@ -294,6 +295,7 @@ const Index = () => {
         onCloseTab={closeTab}
         onRenameTab={renameTab}
         onAddTab={() => addTab()}
+        onReorderTabs={reorderTabs}
       />
       <EditorToolbar
         onFormat={handleFormat}

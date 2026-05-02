@@ -1,67 +1,20 @@
 import { ValidationResult } from '@/types';
 
-/**
- * Format JSON-like structure by indenting based on braces/brackets.
- * Works on invalid JSON to at least improve readability while showing the error.
- */
-function formatStructure(
-  input: string,
-  indentSize: number = 2,
-  indentType: 'spaces' | 'tabs' = 'spaces'
-): string {
-  const indent = indentType === 'tabs' ? '\t' : ' '.repeat(indentSize);
-  let depth = 0;
+function stripJsonComments(input: string): string {
   let result = '';
   let i = 0;
   const len = input.length;
 
-  const skipWhitespace = () => {
-    while (i < len && /[\s\n\r\t]/.test(input[i])) {
-      result += input[i];
-      i++;
-    }
-  };
-
   while (i < len) {
-    const ch = input[i];
-    if (ch === '{' || ch === '[') {
-      result += ch;
-      i++;
-      skipWhitespace();
-      if (i < len && input[i] !== '}' && input[i] !== ']') {
-        depth++;
-        result += '\n' + indent.repeat(depth);
-      }
-    } else if (ch === '}' || ch === ']') {
-      if (depth > 0) {
-        depth--;
-        result += '\n' + indent.repeat(depth);
-      }
-      result += ch;
-      i++;
-      skipWhitespace();
-      if (i < len && input[i] === ',') {
-        result += input[i];
-        i++;
-        result += '\n' + indent.repeat(depth);
-      }
-    } else if (ch === ',') {
-      result += ch;
-      i++;
-      skipWhitespace();
-      if (i < len) {
-        result += '\n' + indent.repeat(depth);
-      }
-    } else if (ch === '"') {
-      result += ch;
+    if (input[i] === '"') {
+      result += '"';
       i++;
       while (i < len) {
-        if (input[i] === '\\') {
-          result += input[i];
-          if (i + 1 < len) result += input[i + 1];
+        if (input[i] === '\\' && i + 1 < len) {
+          result += input[i] + input[i + 1];
           i += 2;
         } else if (input[i] === '"') {
-          result += input[i];
+          result += '"';
           i++;
           break;
         } else {
@@ -69,13 +22,25 @@ function formatStructure(
           i++;
         }
       }
+    } else if (input[i] === '/' && i + 1 < len && input[i + 1] === '/') {
+      i += 2;
+      while (i < len && input[i] !== '\n') i++;
+    } else if (input[i] === '/' && i + 1 < len && input[i + 1] === '*') {
+      i += 2;
+      while (i < len) {
+        if (input[i] === '*' && i + 1 < len && input[i + 1] === '/') {
+          i += 2;
+          break;
+        }
+        i++;
+      }
     } else {
-      result += ch;
+      result += input[i];
       i++;
     }
   }
 
-  return result.trim();
+  return result;
 }
 
 export function validateAndFormatJson(
@@ -92,10 +57,11 @@ export function validateAndFormatJson(
   }
 
   try {
-    const parsed = JSON.parse(input);
+    const stripped = stripJsonComments(input);
+    const parsed = JSON.parse(stripped);
     const indent = indentType === 'tabs' ? '\t' : ' '.repeat(indentSize);
     const formattedJson = JSON.stringify(parsed, null, indent);
-    
+
     return {
       isValid: true,
       error: null,
@@ -109,7 +75,7 @@ export function validateAndFormatJson(
 
       let lineInfo = '';
       if (position !== null) {
-        const lines = input.substring(0, position).split('\n');
+        const lines = stripJsonComments(input).substring(0, position).split('\n');
         const lineNumber = lines.length;
         const columnNumber = lines[lines.length - 1].length + 1;
         lineInfo = ` at line ${lineNumber}, column ${columnNumber}`;
@@ -118,21 +84,21 @@ export function validateAndFormatJson(
       return {
         isValid: false,
         error: `Invalid JSON${lineInfo}: ${errorMessage}`,
-        formattedJson: formatStructure(input, indentSize, indentType),
+        formattedJson: input,
       };
     }
 
     return {
       isValid: false,
       error: 'Unknown error while parsing JSON',
-      formattedJson: formatStructure(input, indentSize, indentType),
+      formattedJson: input,
     };
   }
 }
 
 export function minifyJson(input: string): string {
   try {
-    const parsed = JSON.parse(input);
+    const parsed = JSON.parse(stripJsonComments(input));
     return JSON.stringify(parsed);
   } catch {
     return input;
@@ -142,7 +108,7 @@ export function minifyJson(input: string): string {
 export function isValidJson(input: string): boolean {
   if (!input.trim()) return true;
   try {
-    JSON.parse(input);
+    JSON.parse(stripJsonComments(input));
     return true;
   } catch {
     return false;

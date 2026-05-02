@@ -1,8 +1,10 @@
+import { useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Tab } from '@/types';
 import { TabItem } from './TabItem';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface TabBarProps {
   tabs: Tab[];
@@ -11,6 +13,7 @@ interface TabBarProps {
   onCloseTab: (id: string) => void;
   onRenameTab: (id: string, name: string) => void;
   onAddTab: () => void;
+  onReorderTabs: (fromIndex: number, toIndex: number) => void;
 }
 
 export function TabBar({
@@ -20,20 +23,60 @@ export function TabBar({
   onCloseTab,
   onRenameTab,
   onAddTab,
+  onReorderTabs,
 }: TabBarProps) {
+  const dragIndex = useRef<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.effectAllowed = 'move';
+    dragIndex.current = index;
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropIndex(index);
+  };
+
+  const handleDrop = (index: number) => {
+    if (dragIndex.current !== null && dragIndex.current !== index) {
+      onReorderTabs(dragIndex.current, index);
+    }
+    dragIndex.current = null;
+    setDropIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    dragIndex.current = null;
+    setDropIndex(null);
+  };
+
   return (
     <div className="flex items-center bg-muted border-b border-border">
       <ScrollArea className="flex-1">
         <div className="flex items-end">
-          {tabs.map((tab) => (
-            <TabItem
+          {tabs.map((tab, index) => (
+            <div
               key={tab.id}
-              tab={tab}
-              isActive={tab.id === activeTabId}
-              onSelect={() => onSelectTab(tab.id)}
-              onClose={() => onCloseTab(tab.id)}
-              onRename={(name) => onRenameTab(tab.id, name)}
-            />
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDrop={() => handleDrop(index)}
+              onDragEnd={handleDragEnd}
+              className={cn(
+                'transition-transform duration-100 cursor-grab active:cursor-grabbing',
+                dropIndex === index && dragIndex.current !== index && 'translate-x-1 opacity-60'
+              )}
+            >
+              <TabItem
+                tab={tab}
+                isActive={tab.id === activeTabId}
+                onSelect={() => onSelectTab(tab.id)}
+                onClose={() => onCloseTab(tab.id)}
+                onRename={(name) => onRenameTab(tab.id, name)}
+              />
+            </div>
           ))}
         </div>
         <ScrollBar orientation="horizontal" />

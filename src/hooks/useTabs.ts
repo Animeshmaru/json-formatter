@@ -193,6 +193,15 @@ export function useTabs() {
     }));
   }, []);
 
+  const reorderTabs = useCallback((fromIndex: number, toIndex: number) => {
+    setState((prev) => {
+      const tabs = [...prev.tabs];
+      const [moved] = tabs.splice(fromIndex, 1);
+      tabs.splice(toIndex, 0, moved);
+      return { ...prev, tabs };
+    });
+  }, []);
+
   const activeTab = state.tabs.find((t) => t.id === state.activeTabId) || state.tabs[0];
 
   return {
@@ -209,6 +218,7 @@ export function useTabs() {
     duplicateTab,
     clearActiveTab,
     updatePreferences,
+    reorderTabs,
     toggleDiffMode,
     updateDiffContent,
   };
