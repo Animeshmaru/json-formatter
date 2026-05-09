@@ -52,10 +52,17 @@ export function TabBar({
     setDropIndex(null);
   };
 
+  const handleEmptyAreaDoubleClick = (e: React.MouseEvent) => {
+    // Only trigger if the click target is the empty area (not a tab)
+    if (e.target === e.currentTarget) {
+      onAddTab();
+    }
+  };
+
   return (
     <div className="flex items-center bg-muted border-b border-border">
       <ScrollArea className="flex-1">
-        <div className="flex items-end">
+        <div className="flex items-end min-h-[40px]" onDoubleClick={handleEmptyAreaDoubleClick}>
           {tabs.map((tab, index) => (
             <div
               key={tab.id}
@@ -78,24 +85,17 @@ export function TabBar({
               />
             </div>
           ))}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onAddTab}
+            className="h-8 w-8 mx-2 text-muted-foreground hover:text-foreground hover:bg-secondary flex-shrink-0"
+            title="New tab (Ctrl/Cmd + T)">
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onAddTab}
-        className="
-          h-8 w-8 mx-2
-          text-muted-foreground
-          hover:text-foreground
-          hover:bg-secondary
-          flex-shrink-0
-        "
-        title="New tab (Ctrl/Cmd + T)"
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
     </div>
   );
 }

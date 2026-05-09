@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { Undo2 } from 'lucide-react';
 import { Header } from '@/components/Layout/Header';
-import { Footer } from '@/components/Layout/Footer';
+
 import { TabBar } from '@/components/Tabs/TabBar';
 import { JsonEditor } from '@/components/Editor/JsonEditor';
 import { EditorToolbar } from '@/components/Editor/EditorToolbar';
@@ -27,6 +28,7 @@ const Index = () => {
     preferences,
     addTab,
     closeTab,
+    restoreTab,
     setActiveTab,
     renameTab,
     updateTabContent,
@@ -39,6 +41,7 @@ const Index = () => {
     updateDiffContent,
   } = useTabs();
 
+  const commandPaletteRef = useRef<(() => void) | null>(null);
   const [isMinified, setIsMinified] = useState(false);
   const [activeDiffSide, setActiveDiffSide] = useState<'left' | 'right'>('left');
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -233,14 +236,77 @@ const Index = () => {
 
   const handleClear = useCallback(() => {
     if (activeTab.isDiffMode) {
+      const prev = activeDiffSide === 'left' ? activeTab.diffLeft : activeTab.diffRight;
       updateDiffContent(activeTabId, activeDiffSide, '');
-      toast.success(`${activeDiffSide === 'left' ? 'Left' : 'Right'} editor cleared`);
+      const side = activeDiffSide === 'left' ? 'Left' : 'Right';
+      toast.success(`${side} editor cleared`, {
+        action: {
+          label: (
+            <span className="flex items-center gap-1.5">
+              <Undo2 className="h-3 w-3" />
+              Undo
+            </span>
+          ),
+          onClick: () => updateDiffContent(activeTabId, activeDiffSide, prev ?? ''),
+        },
+      });
     } else {
+      const prevContent = activeTab.content;
+      const prevMinified = isMinified;
       clearActiveTab();
       setIsMinified(false);
-      toast.success('Editor cleared');
+      toast.success('Editor cleared', {
+        action: {
+          label: (
+            <span className="flex items-center gap-1.5">
+              <Undo2 className="h-3 w-3" />
+              Undo
+            </span>
+          ),
+          onClick: () => {
+            updateTabContent(activeTabId, prevContent);
+            setIsMinified(prevMinified);
+          },
+        },
+      });
     }
-  }, [clearActiveTab, activeTab.isDiffMode, activeDiffSide, updateDiffContent, activeTabId]);
+  }, [
+    clearActiveTab,
+    updateTabContent,
+    activeTab,
+    activeDiffSide,
+    updateDiffContent,
+    activeTabId,
+    isMinified,
+  ]);
+
+  const handleCloseTab = useCallback(
+    (tabId: string) => {
+      const tabIndex = tabs.findIndex((t) => t.id === tabId);
+      const tab = tabs[tabIndex];
+      const isLastTab = tabs.length === 1;
+      closeTab(tabId);
+      toast(`Tab ${tab.name} closed`, {
+        action: {
+          label: (
+            <span className="flex items-center gap-1.5">
+              <Undo2 className="h-3 w-3" />
+              Undo
+            </span>
+          ),
+          onClick: () => {
+            if (isLastTab) {
+              // Tab was cleared, not removed — just restore the content
+              updateTabContent(tabId, tab.content, false);
+            } else {
+              restoreTab(tab, tabIndex);
+            }
+          },
+        },
+      });
+    },
+    [tabs, closeTab, restoreTab, updateTabContent]
+  );
 
   const handleToggleDiffMode = useCallback(() => {
     toggleDiffMode(activeTabId);
@@ -259,7 +325,7 @@ const Index = () => {
   useKeyboardShortcuts({
     onFormat: handleFormat,
     onNewTab: () => addTab(),
-    onCloseTab: () => closeTab(activeTabId),
+    onCloseTab: () => handleCloseTab(activeTabId),
     onClear: handleClear,
     onDuplicate: () => duplicateTab(activeTabId),
   });
@@ -292,7 +358,7 @@ const Index = () => {
         tabs={tabs}
         activeTabId={activeTabId}
         onSelectTab={setActiveTab}
-        onCloseTab={closeTab}
+        onCloseTab={handleCloseTab}
         onRenameTab={renameTab}
         onAddTab={() => addTab()}
         onReorderTabs={reorderTabs}
@@ -312,6 +378,7 @@ const Index = () => {
         onPreferencesChange={updatePreferences}
         isDiffMode={activeTab.isDiffMode}
         onToggleDiffMode={handleToggleDiffMode}
+        onOpenCommandPalette={() => commandPaletteRef.current?.()}
       />
       <main className="flex-1 min-h-0 w-full flex flex-col" aria-label="JSON editor">
         {/* SEO: descriptive text for crawlers, visually hidden */}
@@ -339,15 +406,20 @@ const Index = () => {
               theme={preferences.theme}
               isValid={activeTab.isValid}
               tabId={activeTabId}
+              onClear={handleClear}
+              onEditorReady={({ openCommandPalette }) => {
+                commandPaletteRef.current = openCommandPalette;
+              }}
             />
           )}
         </div>
       </main>
       {!activeTab.isDiffMode && activeTab.error && <ErrorDisplay error={activeTab.error} />}
-      {!activeTab.isDiffMode && (
-        <StatusBar isValid={activeTab.isValid} charCount={charCount} lineCount={lineCount} />
-      )}
-      <Footer />
+      <StatusBar
+        isValid={!activeTab.isDiffMode && activeTab.isValid}
+        charCount={!activeTab.isDiffMode ? charCount : 0}
+        lineCount={!activeTab.isDiffMode ? lineCount : 0}
+      />
     </div>
   );
 };

@@ -9,14 +9,36 @@ interface JsonEditorProps {
   theme: 'dark' | 'light';
   isValid: boolean;
   tabId: string;
+  onClear?: () => void;
+  onEditorReady?: (actions: { openCommandPalette: () => void }) => void;
 }
 
-export function JsonEditor({ value, onChange, theme, isValid, tabId }: JsonEditorProps) {
+export function JsonEditor({ value, onChange, theme, isValid, tabId, onClear, onEditorReady }: JsonEditorProps) {
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+  const onClearRef = useRef(onClear);
+  onClearRef.current = onClear;
+  const onEditorReadyRef = useRef(onEditorReady);
 
-  const handleEditorDidMount: OnMount = useCallback((editor) => {
+  const handleEditorDidMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
     editor.focus();
+
+    // Cmd/Ctrl+K — clear editor (override Monaco's chord prefix)
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
+      onClearRef.current?.();
+    });
+
+    // Cmd/Ctrl+D — duplicate line down (override Monaco's "add selection to next find match")
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, () => {
+      editor.trigger('keyboard', 'editor.action.copyLinesDownAction', null);
+    });
+
+    // Expose openCommandPalette to parent
+    const openCommandPalette = () => {
+      editor.focus();
+      editor.trigger('', 'editor.action.quickCommand', null);
+    };
+    onEditorReadyRef.current?.({ openCommandPalette });
   }, []);
 
   const handleChange: OnChange = useCallback(
@@ -47,7 +69,7 @@ export function JsonEditor({ value, onChange, theme, isValid, tabId }: JsonEdito
           onMount={handleEditorDidMount}
           theme={theme === 'dark' ? 'vs-dark' : 'light'}
           options={{
-            minimap: { enabled: false },
+            minimap: { enabled: true, scale: 1, renderCharacters: true },
             fontSize: 14,
             fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
             lineNumbers: 'on',
@@ -61,15 +83,17 @@ export function JsonEditor({ value, onChange, theme, isValid, tabId }: JsonEdito
             renderLineHighlight: 'line',
             cursorBlinking: 'smooth',
             smoothScrolling: true,
+            cursorSmoothCaretAnimation: 'on',
             contextmenu: true,
             formatOnPaste: false,
             formatOnType: false,
             quickSuggestions: false,
-            suggestOnTriggerCharacters: false,
-            acceptSuggestionOnEnter: 'off',
-            tabCompletion: 'off',
-            wordBasedSuggestions: 'off',
-            bracketPairColorization: { enabled: true },
+            suggestOnTriggerCharacters: true,
+            acceptSuggestionOnEnter: 'on',
+            tabCompletion: 'on',
+            wordBasedSuggestions: 'allDocuments',
+            bracketPairColorization: { enabled: true, independentColorPoolPerBracketType: true },
+            fontLigatures: true,
             guides: {
               bracketPairs: true,
               indentation: true,

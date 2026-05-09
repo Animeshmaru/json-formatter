@@ -33,8 +33,8 @@ export function DiffMode({
 
   return (
     <ResizablePanelGroup direction="vertical" className="h-full w-full">
-      {/* Top: Two side-by-side editors (default 70%) */}
-      <ResizablePanel defaultSize={70} minSize={20}>
+      {/* Top: Two side-by-side editors (default 40%) */}
+      <ResizablePanel defaultSize={40} minSize={0}>
         <div className="flex h-full min-h-0">
           <div
             className={`flex-1 flex flex-col min-w-0 border-r border-border ${
@@ -87,8 +87,8 @@ export function DiffMode({
 
       <ResizableHandle withHandle />
 
-      {/* Bottom: Diff viewer (default 30%, draggable up) */}
-      <ResizablePanel defaultSize={30} minSize={10}>
+      {/* Bottom: Diff viewer (default 60%, draggable up) */}
+      <ResizablePanel defaultSize={60} minSize={0}>
         <div className="flex flex-col h-full min-h-0">
           <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground bg-card border-b border-border">
             Differences

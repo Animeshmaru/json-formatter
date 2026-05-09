@@ -202,6 +202,15 @@ export function useTabs() {
     });
   }, []);
 
+  const restoreTab = useCallback((tab: Tab, atIndex: number) => {
+    setState((prev) => {
+      const tabs = [...prev.tabs];
+      const insertAt = Math.min(atIndex, tabs.length);
+      tabs.splice(insertAt, 0, tab);
+      return { ...prev, tabs, activeTabId: tab.id };
+    });
+  }, []);
+
   const activeTab = state.tabs.find((t) => t.id === state.activeTabId) || state.tabs[0];
 
   return {
@@ -211,6 +220,7 @@ export function useTabs() {
     preferences: state.preferences,
     addTab,
     closeTab,
+    restoreTab,
     setActiveTab,
     renameTab,
     updateTabContent,

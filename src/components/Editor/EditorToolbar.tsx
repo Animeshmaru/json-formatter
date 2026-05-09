@@ -12,6 +12,7 @@ import {
   Sun,
   Wand2,
   GitCompareArrows,
+  Command,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,6 +44,7 @@ interface EditorToolbarProps {
   onPreferencesChange: (updates: Partial<EditorPreferences>) => void;
   isDiffMode: boolean;
   onToggleDiffMode: () => void;
+  onOpenCommandPalette?: () => void;
 }
 
 export function EditorToolbar({
@@ -60,6 +62,7 @@ export function EditorToolbar({
   onPreferencesChange,
   isDiffMode,
   onToggleDiffMode,
+  onOpenCommandPalette,
 }: EditorToolbarProps) {
   const [copied, setCopied] = useState(false);
 
@@ -71,7 +74,7 @@ export function EditorToolbar({
   };
 
   return (
-    <div className="flex items-center gap-1 px-3 py-2 bg-card border-b border-border">
+    <div className="flex items-center gap-1 px-3 py-1 bg-card border-b border-border">
       <Button
         variant="ghost"
         size="sm"
@@ -172,6 +175,16 @@ export function EditorToolbar({
       </Button>
 
       <div className="flex-1" />
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onOpenCommandPalette}
+        className="h-8 w-8"
+        title="Command Palette (F1)"
+      >
+        <Command className="h-4 w-4" />
+      </Button>
 
       <Button
         variant="ghost"
