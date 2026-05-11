@@ -170,7 +170,15 @@ export function useTabs() {
   const toggleDiffMode = useCallback((tabId: string) => {
     setState((prev) => ({
       ...prev,
-      tabs: prev.tabs.map((t) => (t.id === tabId ? { ...t, isDiffMode: !t.isDiffMode } : t)),
+      tabs: prev.tabs.map((t) =>
+        t.id === tabId
+          ? {
+              ...t,
+              isDiffMode: !t.isDiffMode,
+              diffLeft: !t.isDiffMode && !t.diffLeft ? t.content : t.diffLeft,
+            }
+          : t
+      ),
     }));
   }, []);
 

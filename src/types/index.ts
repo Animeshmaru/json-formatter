@@ -14,6 +14,7 @@ export interface EditorPreferences {
   indentType: 'spaces' | 'tabs';
   theme: 'dark' | 'light';
   autoFormat: boolean;
+  diffUnified: boolean;
 }
 
 export interface AppState {

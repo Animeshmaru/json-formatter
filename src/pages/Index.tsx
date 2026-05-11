@@ -166,12 +166,17 @@ const Index = () => {
     try {
       const { content, filename } = await uploadJsonFile();
       const result = validateAndFormatJson(content, preferences.indentSize, preferences.indentType);
-      addTab(filename, result.formattedJson ?? content);
-      toast.success('File uploaded');
+      if (activeTab.isDiffMode) {
+        updateDiffContent(activeTabId, activeDiffSide, result.formattedJson ?? content);
+        toast.success(`File uploaded to ${activeDiffSide} editor`);
+      } else {
+        addTab(filename, result.formattedJson ?? content);
+        toast.success('File uploaded');
+      }
     } catch (e) {
       toast.error('Failed to upload file');
     }
-  }, [addTab, preferences.indentSize, preferences.indentType]);
+  }, [addTab, preferences.indentSize, preferences.indentType, activeTab.isDiffMode, activeDiffSide, updateDiffContent, activeTabId]);
 
   const handleShare = useCallback(() => {
     if (activeTab.isDiffMode) {

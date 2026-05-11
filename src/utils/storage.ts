@@ -7,6 +7,7 @@ const defaultPreferences: EditorPreferences = {
   indentType: 'spaces',
   theme: 'dark',
   autoFormat: false,
+  diffUnified: false,
 };
 
 const createDefaultTab = (): Tab => ({
