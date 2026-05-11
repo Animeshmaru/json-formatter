@@ -403,6 +403,8 @@ const Index = () => {
               tabId={activeTabId}
               activeSide={activeDiffSide}
               onFocusSide={setActiveDiffSide}
+                isUnified={preferences.diffUnified}
+                onUnifiedChange={(value) => updatePreferences({ diffUnified: value })}
             />
           ) : (
             <JsonEditor
