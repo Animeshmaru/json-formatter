@@ -88,7 +88,7 @@ export function JsonEditor({ value, onChange, theme, isValid, tabId, onClear, on
             formatOnPaste: false,
             formatOnType: false,
             quickSuggestions: false,
-            suggestOnTriggerCharacters: true,
+            suggestOnTriggerCharacters: false,
             acceptSuggestionOnEnter: 'on',
             tabCompletion: 'on',
             wordBasedSuggestions: 'allDocuments',
