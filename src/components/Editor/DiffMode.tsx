@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { JsonEditor } from './JsonEditor';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import {
@@ -9,6 +9,7 @@ import {
   ListOrdered,
   ArrowLeftRight,
   KeyRound,
+  FoldVertical,
 } from 'lucide-react';
 import type { editor as MonacoEditor } from 'monaco-editor';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
@@ -42,6 +43,8 @@ interface DiffModeProps {
   onIgnoreArrayOrderChange: (value: boolean) => void;
   keysOnly: boolean;
   onKeysOnlyChange: (value: boolean) => void;
+  diffOnlyView: boolean;
+  onDiffOnlyViewChange: (value: boolean) => void;
   onSwapSides: () => void;
   indentSize: number;
   indentType: 'spaces' | 'tabs';
@@ -64,6 +67,8 @@ export function DiffMode({
   onIgnoreArrayOrderChange,
   keysOnly,
   onKeysOnlyChange,
+  diffOnlyView,
+  onDiffOnlyViewChange,
   onSwapSides,
   indentSize,
   indentType,
@@ -93,6 +98,30 @@ export function DiffMode({
         : rightContent,
     [rightContent, hasNormalization, normalizeOpts, indentSize, indentType]
   );
+
+  // Monaco's hideUnchangedRegions preserves each region's prior collapsed/expanded state
+  // across live diff recomputes (to avoid jank while a user edits inside the diff editor
+  // itself) — a newly-unchanged region inherits "expanded" rather than re-collapsing. Since
+  // this pane is read-only and purely derived from the two source editors, that protection
+  // just gets in the way here; remounting gives it a clean slate (same as a page reload) so
+  // it collapses newly-matching regions. Only done while "Diff only" is on — an immediate
+  // remount when it's switched on, then a short debounce after each further edit so it
+  // doesn't remount on every keystroke while still staying collapsed to just the changes.
+  const [remountKey, setRemountKey] = useState(0);
+  const wasDiffOnlyView = useRef(false);
+  useEffect(() => {
+    if (!diffOnlyView) {
+      wasDiffOnlyView.current = false;
+      return;
+    }
+    if (!wasDiffOnlyView.current) {
+      wasDiffOnlyView.current = true;
+      setRemountKey((k) => k + 1);
+      return;
+    }
+    const timeout = setTimeout(() => setRemountKey((k) => k + 1), 300);
+    return () => clearTimeout(timeout);
+  }, [diffOriginal, diffModified, diffOnlyView]);
 
   const diffEditorRef = useRef<MonacoEditor.IStandaloneDiffEditor | null>(null);
   const decorationsRef = useRef<string[]>([]);
@@ -349,6 +378,19 @@ export function DiffMode({
                   Keys only
                 </button>
                 <div className="h-3 w-px bg-border" />
+                <button
+                  onClick={() => onDiffOnlyViewChange(!diffOnlyView)}
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors border ${
+                    diffOnlyView
+                      ? 'bg-primary/15 text-primary border-primary/30'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Keep unchanged lines collapsed as you edit"
+                >
+                  <FoldVertical className="h-3 w-3" />
+                  Diff only
+                </button>
+                <div className="h-3 w-px bg-border" />
                 {/* Split / Unified toggle */}
                 <div className="flex items-center rounded-md border border-border bg-muted p-0.5 gap-0.5">
                   <button
@@ -388,6 +430,7 @@ export function DiffMode({
                 }
               >
                 <MonacoDiffEditor
+                  key={remountKey}
                   height="100%"
                   language="json"
                   original={diffOriginal}
@@ -406,6 +449,13 @@ export function DiffMode({
                     wordWrapOverride1: 'on',
                     wordWrapOverride2: 'on',
                     padding: { top: 8, bottom: 8 },
+                    diffAlgorithm: 'advanced',
+                    hideUnchangedRegions: {
+                      enabled: diffOnlyView,
+                      revealLineCount: 20,
+                      minimumLineCount: 3,
+                      contextLineCount: 3,
+                    },
                   }}
                 />
               </Suspense>

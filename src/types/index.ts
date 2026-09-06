@@ -18,6 +18,7 @@ export interface EditorPreferences {
   diffIgnoreKeyOrder: boolean;
   diffIgnoreArrayOrder: boolean;
   diffKeysOnly: boolean;
+  diffOnlyView: boolean;
 }
 
 export interface AppState {

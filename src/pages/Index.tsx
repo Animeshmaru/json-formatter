@@ -416,6 +416,8 @@ const Index = () => {
               onIgnoreArrayOrderChange={(value) => updatePreferences({ diffIgnoreArrayOrder: value })}
               keysOnly={preferences.diffKeysOnly}
               onKeysOnlyChange={(value) => updatePreferences({ diffKeysOnly: value })}
+              diffOnlyView={preferences.diffOnlyView}
+              onDiffOnlyViewChange={(value) => updatePreferences({ diffOnlyView: value })}
               onSwapSides={handleSwapDiffSides}
               indentSize={preferences.indentSize}
               indentType={preferences.indentType}

@@ -11,6 +11,7 @@ const defaultPreferences: EditorPreferences = {
   diffIgnoreKeyOrder: false,
   diffIgnoreArrayOrder: false,
   diffKeysOnly: false,
+  diffOnlyView: false,
 };
 
 const createDefaultTab = (): Tab => ({
