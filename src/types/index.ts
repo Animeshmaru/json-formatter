@@ -15,6 +15,7 @@ export interface EditorPreferences {
   theme: 'dark' | 'light';
   autoFormat: boolean;
   diffUnified: boolean;
+  diffIgnoreKeyOrder: boolean;
 }
 
 export interface AppState {

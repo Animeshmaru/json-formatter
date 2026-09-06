@@ -1,9 +1,10 @@
-import { lazy, Suspense, useCallback, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { JsonEditor } from './JsonEditor';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { Columns2, AlignLeft, ChevronUp, ChevronDown } from 'lucide-react';
+import { Columns2, AlignLeft, ChevronUp, ChevronDown, ListOrdered, ArrowLeftRight } from 'lucide-react';
 import type { editor as MonacoEditor } from 'monaco-editor';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
+import { normalizeJsonForDiff } from '@/utils/jsonFormatter';
 
 const MonacoDiffEditor = lazy(() =>
   import('@monaco-editor/react').then((mod) => ({ default: mod.DiffEditor }))
@@ -20,6 +21,11 @@ interface DiffModeProps {
   onFocusSide: (side: 'left' | 'right') => void;
   isUnified: boolean;
   onUnifiedChange: (value: boolean) => void;
+  ignoreKeyOrder: boolean;
+  onIgnoreKeyOrderChange: (value: boolean) => void;
+  onSwapSides: () => void;
+  indentSize: number;
+  indentType: 'spaces' | 'tabs';
 }
 
 export function DiffMode({
@@ -33,10 +39,31 @@ export function DiffMode({
   onFocusSide,
   isUnified,
   onUnifiedChange,
+  ignoreKeyOrder,
+  onIgnoreKeyOrderChange,
+  onSwapSides,
+  indentSize,
+  indentType,
 }: DiffModeProps) {
   const handleLeftChange = useCallback((value: string) => onLeftChange(value), [onLeftChange]);
 
   const handleRightChange = useCallback((value: string) => onRightChange(value), [onRightChange]);
+
+  const diffOriginal = useMemo(
+    () =>
+      ignoreKeyOrder
+        ? normalizeJsonForDiff(leftContent, indentSize, indentType)
+        : leftContent,
+    [leftContent, ignoreKeyOrder, indentSize, indentType]
+  );
+
+  const diffModified = useMemo(
+    () =>
+      ignoreKeyOrder
+        ? normalizeJsonForDiff(rightContent, indentSize, indentType)
+        : rightContent,
+    [rightContent, ignoreKeyOrder, indentSize, indentType]
+  );
 
   const diffEditorRef = useRef<MonacoEditor.IStandaloneDiffEditor | null>(null);
   const decorationsRef = useRef<string[]>([]);
@@ -148,13 +175,15 @@ export function DiffMode({
               }`}
               onFocus={() => onFocusSide('left')}
             >
-              <div
-                className={`px-3 py-1.5 text-xs font-medium bg-card border-b border-border ${
+              <button
+                type="button"
+                onClick={() => onFocusSide('left')}
+                className={`px-3 py-1.5 text-xs font-medium bg-card border-b border-border text-left hover:text-foreground transition-colors ${
                   activeSide === 'left' ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
                 Left JSON
-              </div>
+              </button>
               <div className="flex-1 min-h-0">
                 <JsonEditor
                   value={leftContent}
@@ -171,13 +200,15 @@ export function DiffMode({
               }`}
               onFocus={() => onFocusSide('right')}
             >
-              <div
-                className={`px-3 py-1.5 text-xs font-medium bg-card border-b border-border ${
+              <button
+                type="button"
+                onClick={() => onFocusSide('right')}
+                className={`px-3 py-1.5 text-xs font-medium bg-card border-b border-border text-left hover:text-foreground transition-colors ${
                   activeSide === 'right' ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
                 Right JSON
-              </div>
+              </button>
               <div className="flex-1 min-h-0">
                 <JsonEditor
                   value={rightContent}
@@ -233,6 +264,28 @@ export function DiffMode({
                   </div>
                 )}
                 <div className="h-3 w-px bg-border" />
+                <button
+                  onClick={onSwapSides}
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  title="Swap left and right"
+                >
+                  <ArrowLeftRight className="h-3.5 w-3.5" />
+                  Swap
+                </button>
+                <div className="h-3 w-px bg-border" />
+                <button
+                  onClick={() => onIgnoreKeyOrderChange(!ignoreKeyOrder)}
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors border ${
+                    ignoreKeyOrder
+                      ? 'bg-primary/15 text-primary border-primary/30'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="Ignore object key order in the diff"
+                >
+                  <ListOrdered className="h-3 w-3" />
+                  Ignore key order
+                </button>
+                <div className="h-3 w-px bg-border" />
                 {/* Split / Unified toggle */}
                 <div className="flex items-center rounded-md border border-border bg-muted p-0.5 gap-0.5">
                   <button
@@ -274,8 +327,8 @@ export function DiffMode({
                 <MonacoDiffEditor
                   height="100%"
                   language="json"
-                  original={leftContent}
-                  modified={rightContent}
+                  original={diffOriginal}
+                  modified={diffModified}
                   theme={theme === 'dark' ? 'vs-dark' : 'light'}
                   onMount={handleDiffEditorMount}
                   options={{

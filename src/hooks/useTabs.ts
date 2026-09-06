@@ -194,6 +194,15 @@ export function useTabs() {
     []
   );
 
+  const swapDiffSides = useCallback((tabId: string) => {
+    setState((prev) => ({
+      ...prev,
+      tabs: prev.tabs.map((t) =>
+        t.id === tabId ? { ...t, diffLeft: t.diffRight, diffRight: t.diffLeft } : t
+      ),
+    }));
+  }, []);
+
   const updatePreferences = useCallback((updates: Partial<EditorPreferences>) => {
     setState((prev) => ({
       ...prev,
@@ -239,5 +248,6 @@ export function useTabs() {
     reorderTabs,
     toggleDiffMode,
     updateDiffContent,
+    swapDiffSides,
   };
 }

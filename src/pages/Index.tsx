@@ -39,6 +39,7 @@ const Index = () => {
     reorderTabs,
     toggleDiffMode,
     updateDiffContent,
+    swapDiffSides,
   } = useTabs();
 
   const commandPaletteRef = useRef<(() => void) | null>(null);
@@ -317,6 +318,10 @@ const Index = () => {
     toggleDiffMode(activeTabId);
   }, [toggleDiffMode, activeTabId]);
 
+  const handleSwapDiffSides = useCallback(() => {
+    swapDiffSides(activeTabId);
+  }, [swapDiffSides, activeTabId]);
+
   const handleDiffLeftChange = useCallback(
     (value: string) => updateDiffContent(activeTabId, 'left', value),
     [updateDiffContent, activeTabId]
@@ -403,8 +408,13 @@ const Index = () => {
               tabId={activeTabId}
               activeSide={activeDiffSide}
               onFocusSide={setActiveDiffSide}
-                isUnified={preferences.diffUnified}
-                onUnifiedChange={(value) => updatePreferences({ diffUnified: value })}
+              isUnified={preferences.diffUnified}
+              onUnifiedChange={(value) => updatePreferences({ diffUnified: value })}
+              ignoreKeyOrder={preferences.diffIgnoreKeyOrder}
+              onIgnoreKeyOrderChange={(value) => updatePreferences({ diffIgnoreKeyOrder: value })}
+              onSwapSides={handleSwapDiffSides}
+              indentSize={preferences.indentSize}
+              indentType={preferences.indentType}
             />
           ) : (
             <JsonEditor
