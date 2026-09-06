@@ -287,6 +287,8 @@ export function DiffMode({
                     automaticLayout: true,
                     renderSideBySide: !isUnified,
                     wordWrap: 'on',
+                    wordWrapOverride1: 'on',
+                    wordWrapOverride2: 'on',
                     padding: { top: 8, bottom: 8 },
                   }}
                 />
