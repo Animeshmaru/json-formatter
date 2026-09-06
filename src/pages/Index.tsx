@@ -412,6 +412,10 @@ const Index = () => {
               onUnifiedChange={(value) => updatePreferences({ diffUnified: value })}
               ignoreKeyOrder={preferences.diffIgnoreKeyOrder}
               onIgnoreKeyOrderChange={(value) => updatePreferences({ diffIgnoreKeyOrder: value })}
+              ignoreArrayOrder={preferences.diffIgnoreArrayOrder}
+              onIgnoreArrayOrderChange={(value) => updatePreferences({ diffIgnoreArrayOrder: value })}
+              keysOnly={preferences.diffKeysOnly}
+              onKeysOnlyChange={(value) => updatePreferences({ diffKeysOnly: value })}
               onSwapSides={handleSwapDiffSides}
               indentSize={preferences.indentSize}
               indentType={preferences.indentType}

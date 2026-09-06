@@ -9,6 +9,8 @@ const defaultPreferences: EditorPreferences = {
   autoFormat: false,
   diffUnified: false,
   diffIgnoreKeyOrder: false,
+  diffIgnoreArrayOrder: false,
+  diffKeysOnly: false,
 };
 
 const createDefaultTab = (): Tab => ({

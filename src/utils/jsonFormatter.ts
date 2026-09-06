@@ -1,6 +1,6 @@
 import { ValidationResult } from '@/types';
 
-function stripJsonComments(input: string): string {
+export function stripJsonComments(input: string): string {
   let result = '';
   let i = 0;
   const len = input.length;
@@ -115,31 +115,3 @@ export function isValidJson(input: string): boolean {
   }
 }
 
-export function sortKeysDeep(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sortKeysDeep);
-  }
-  if (value !== null && typeof value === 'object') {
-    const sorted: Record<string, unknown> = {};
-    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
-      sorted[key] = sortKeysDeep((value as Record<string, unknown>)[key]);
-    }
-    return sorted;
-  }
-  return value;
-}
-
-export function normalizeJsonForDiff(
-  content: string,
-  indentSize: number = 2,
-  indentType: 'spaces' | 'tabs' = 'spaces'
-): string {
-  if (!content.trim()) return content;
-  try {
-    const parsed = JSON.parse(stripJsonComments(content));
-    const indent = indentType === 'tabs' ? '\t' : ' '.repeat(indentSize);
-    return JSON.stringify(sortKeysDeep(parsed), null, indent);
-  } catch {
-    return content;
-  }
-}

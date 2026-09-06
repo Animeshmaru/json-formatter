@@ -1,10 +1,25 @@
 import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { JsonEditor } from './JsonEditor';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { Columns2, AlignLeft, ChevronUp, ChevronDown, ListOrdered, ArrowLeftRight } from 'lucide-react';
+import {
+  Columns2,
+  AlignLeft,
+  ChevronUp,
+  ChevronDown,
+  ListOrdered,
+  ArrowLeftRight,
+  KeyRound,
+} from 'lucide-react';
 import type { editor as MonacoEditor } from 'monaco-editor';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
-import { normalizeJsonForDiff } from '@/utils/jsonFormatter';
+import { normalizeJsonForDiff } from '@/utils/diffCompare';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
 
 const MonacoDiffEditor = lazy(() =>
   import('@monaco-editor/react').then((mod) => ({ default: mod.DiffEditor }))
@@ -23,6 +38,10 @@ interface DiffModeProps {
   onUnifiedChange: (value: boolean) => void;
   ignoreKeyOrder: boolean;
   onIgnoreKeyOrderChange: (value: boolean) => void;
+  ignoreArrayOrder: boolean;
+  onIgnoreArrayOrderChange: (value: boolean) => void;
+  keysOnly: boolean;
+  onKeysOnlyChange: (value: boolean) => void;
   onSwapSides: () => void;
   indentSize: number;
   indentType: 'spaces' | 'tabs';
@@ -41,6 +60,10 @@ export function DiffMode({
   onUnifiedChange,
   ignoreKeyOrder,
   onIgnoreKeyOrderChange,
+  ignoreArrayOrder,
+  onIgnoreArrayOrderChange,
+  keysOnly,
+  onKeysOnlyChange,
   onSwapSides,
   indentSize,
   indentType,
@@ -49,20 +72,26 @@ export function DiffMode({
 
   const handleRightChange = useCallback((value: string) => onRightChange(value), [onRightChange]);
 
+  const normalizeOpts = useMemo(
+    () => ({ ignoreKeyOrder, ignoreArrayOrder, keysOnly }),
+    [ignoreKeyOrder, ignoreArrayOrder, keysOnly]
+  );
+  const hasNormalization = ignoreKeyOrder || ignoreArrayOrder || keysOnly;
+
   const diffOriginal = useMemo(
     () =>
-      ignoreKeyOrder
-        ? normalizeJsonForDiff(leftContent, indentSize, indentType)
+      hasNormalization
+        ? normalizeJsonForDiff(leftContent, normalizeOpts, indentSize, indentType)
         : leftContent,
-    [leftContent, ignoreKeyOrder, indentSize, indentType]
+    [leftContent, hasNormalization, normalizeOpts, indentSize, indentType]
   );
 
   const diffModified = useMemo(
     () =>
-      ignoreKeyOrder
-        ? normalizeJsonForDiff(rightContent, indentSize, indentType)
+      hasNormalization
+        ? normalizeJsonForDiff(rightContent, normalizeOpts, indentSize, indentType)
         : rightContent,
-    [rightContent, ignoreKeyOrder, indentSize, indentType]
+    [rightContent, hasNormalization, normalizeOpts, indentSize, indentType]
   );
 
   const diffEditorRef = useRef<MonacoEditor.IStandaloneDiffEditor | null>(null);
@@ -273,17 +302,51 @@ export function DiffMode({
                   Swap
                 </button>
                 <div className="h-3 w-px bg-border" />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors border ${
+                        ignoreKeyOrder || ignoreArrayOrder
+                          ? 'bg-primary/15 text-primary border-primary/30'
+                          : 'border-transparent text-muted-foreground hover:text-foreground'
+                      }`}
+                      title="Ignore ordering when comparing"
+                    >
+                      <ListOrdered className="h-3 w-3" />
+                      Ignore order
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-card border border-border shadow-md">
+                    <DropdownMenuLabel className="text-muted-foreground text-xs font-semibold">
+                      Ignore order
+                    </DropdownMenuLabel>
+                    <DropdownMenuCheckboxItem
+                      checked={ignoreKeyOrder}
+                      onCheckedChange={onIgnoreKeyOrderChange}
+                      className="cursor-pointer focus:bg-transparent focus:text-primary"
+                    >
+                      Ignore key order
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={ignoreArrayOrder}
+                      onCheckedChange={onIgnoreArrayOrderChange}
+                      className="cursor-pointer focus:bg-transparent focus:text-primary"
+                    >
+                      Ignore array order
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <button
-                  onClick={() => onIgnoreKeyOrderChange(!ignoreKeyOrder)}
+                  onClick={() => onKeysOnlyChange(!keysOnly)}
                   className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors border ${
-                    ignoreKeyOrder
+                    keysOnly
                       ? 'bg-primary/15 text-primary border-primary/30'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
-                  title="Ignore object key order in the diff"
+                  title="Only compare key/structure presence, ignore value differences"
                 >
-                  <ListOrdered className="h-3 w-3" />
-                  Ignore key order
+                  <KeyRound className="h-3 w-3" />
+                  Keys only
                 </button>
                 <div className="h-3 w-px bg-border" />
                 {/* Split / Unified toggle */}

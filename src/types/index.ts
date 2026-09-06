@@ -16,6 +16,8 @@ export interface EditorPreferences {
   autoFormat: boolean;
   diffUnified: boolean;
   diffIgnoreKeyOrder: boolean;
+  diffIgnoreArrayOrder: boolean;
+  diffKeysOnly: boolean;
 }
 
 export interface AppState {
