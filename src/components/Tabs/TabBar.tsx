@@ -94,7 +94,7 @@ export function TabBar({
             <Plus className="h-4 w-4" />
           </Button>
         </div>
-        <ScrollBar orientation="horizontal" />
+        <ScrollBar orientation="horizontal" className="hidden" />
       </ScrollArea>
     </div>
   );
