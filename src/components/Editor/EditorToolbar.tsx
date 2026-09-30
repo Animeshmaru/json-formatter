@@ -13,6 +13,9 @@ import {
   Wand2,
   GitCompareArrows,
   Command,
+  FoldVertical,
+  UnfoldVertical,
+  ListTree,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,6 +48,10 @@ interface EditorToolbarProps {
   isDiffMode: boolean;
   onToggleDiffMode: () => void;
   onOpenCommandPalette?: () => void;
+  onFoldAll?: () => void;
+  isAllFolded?: boolean;
+  isTreeView?: boolean;
+  onToggleTreeView?: () => void;
 }
 
 export function EditorToolbar({
@@ -63,6 +70,10 @@ export function EditorToolbar({
   isDiffMode,
   onToggleDiffMode,
   onOpenCommandPalette,
+  onFoldAll,
+  isAllFolded,
+  isTreeView,
+  onToggleTreeView,
 }: EditorToolbarProps) {
   const [copied, setCopied] = useState(false);
 
@@ -120,6 +131,27 @@ export function EditorToolbar({
         )}
       </Button>
 
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onFoldAll}
+        disabled={!hasContent || !isValid || isDiffMode}
+        className="gap-1.5 text-xs font-medium"
+        title={isAllFolded ? 'Unfold all' : 'Collapse all'}
+      >
+        {isAllFolded ? (
+          <>
+            <UnfoldVertical className="h-4 w-4 text-primary" />
+            Unfold All
+          </>
+        ) : (
+          <>
+            <FoldVertical className="h-4 w-4 text-primary" />
+            Collapse All
+          </>
+        )}
+      </Button>
+
       <div className="h-4 w-[2px] bg-border mx-1" />
 
       <Button variant="ghost" size="sm" onClick={onUpload} className="gap-1.5 text-xs font-medium">
@@ -172,6 +204,19 @@ export function EditorToolbar({
       >
         <GitCompareArrows className="h-4 w-4 text-primary" />
         Diff
+      </Button>
+
+      <Button
+        variant={isTreeView ? 'secondary' : 'ghost'}
+        size="sm"
+        onClick={onToggleTreeView}
+        disabled={!hasContent || isDiffMode}
+        className={`gap-1.5 text-xs font-medium ${
+          isTreeView ? 'bg-primary/15 text-primary border border-primary/30' : ''
+        }`}
+      >
+        <ListTree className="h-4 w-4 text-primary" />
+        Tree View
       </Button>
 
       <div className="flex-1" />

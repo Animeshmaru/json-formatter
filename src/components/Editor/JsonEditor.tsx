@@ -1,5 +1,6 @@
 import { useRef, useCallback, lazy, Suspense } from 'react';
 import type { OnMount, OnChange } from '@monaco-editor/react';
+import { attachFoldStateTracking } from '@/utils/monacoFoldState';
 
 const MonacoEditor = lazy(() => import('@monaco-editor/react'));
 
@@ -10,14 +11,26 @@ interface JsonEditorProps {
   isValid: boolean;
   tabId: string;
   onClear?: () => void;
-  onEditorReady?: (actions: { openCommandPalette: () => void }) => void;
+  onEditorReady?: (actions: { openCommandPalette: () => void; foldAll: () => void; unfoldAll: () => void }) => void;
+  onFoldStateChange?: (allFolded: boolean) => void;
 }
 
-export function JsonEditor({ value, onChange, theme, isValid, tabId, onClear, onEditorReady }: JsonEditorProps) {
+export function JsonEditor({
+  value,
+  onChange,
+  theme,
+  isValid,
+  tabId,
+  onClear,
+  onEditorReady,
+  onFoldStateChange,
+}: JsonEditorProps) {
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
   const onClearRef = useRef(onClear);
   onClearRef.current = onClear;
   const onEditorReadyRef = useRef(onEditorReady);
+  const onFoldStateChangeRef = useRef(onFoldStateChange);
+  onFoldStateChangeRef.current = onFoldStateChange;
 
   const handleEditorDidMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
@@ -33,12 +46,23 @@ export function JsonEditor({ value, onChange, theme, isValid, tabId, onClear, on
       editor.trigger('keyboard', 'editor.action.copyLinesDownAction', null);
     });
 
-    // Expose openCommandPalette to parent
+    // Expose openCommandPalette / foldAll / unfoldAll to parent
     const openCommandPalette = () => {
       editor.focus();
       editor.trigger('', 'editor.action.quickCommand', null);
     };
-    onEditorReadyRef.current?.({ openCommandPalette });
+    const foldAll = () => {
+      editor.focus();
+      editor.trigger('', 'editor.foldAll', null);
+    };
+    const unfoldAll = () => {
+      editor.focus();
+      editor.trigger('', 'editor.unfoldAll', null);
+    };
+    onEditorReadyRef.current?.({ openCommandPalette, foldAll, unfoldAll });
+
+    // Self-disposes on editor.onDidDispose; no need to hold or clean up the return value.
+    attachFoldStateTracking(editor, (allFolded) => onFoldStateChangeRef.current?.(allFolded));
   }, []);
 
   const handleChange: OnChange = useCallback(

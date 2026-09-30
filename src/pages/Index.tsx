@@ -4,10 +4,12 @@ import { Header } from '@/components/Layout/Header';
 
 import { TabBar } from '@/components/Tabs/TabBar';
 import { JsonEditor } from '@/components/Editor/JsonEditor';
+import { JsonTreeView, JsonTreeViewHandle } from '@/components/Editor/JsonTreeView';
 import { EditorToolbar } from '@/components/Editor/EditorToolbar';
 import { ErrorDisplay } from '@/components/Editor/ErrorDisplay';
 import { StatusBar } from '@/components/Editor/StatusBar';
 import { DiffMode } from '@/components/Editor/DiffMode';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { useTabs } from '@/hooks/useTabs';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { validateAndFormatJson, minifyJson } from '@/utils/jsonFormatter';
@@ -43,7 +45,12 @@ const Index = () => {
   } = useTabs();
 
   const commandPaletteRef = useRef<(() => void) | null>(null);
+  const foldAllRef = useRef<(() => void) | null>(null);
+  const unfoldAllRef = useRef<(() => void) | null>(null);
+  const treeViewRef = useRef<JsonTreeViewHandle>(null);
+  const [isAllFolded, setIsAllFolded] = useState(false);
   const [isMinified, setIsMinified] = useState(false);
+  const [showTreeView, setShowTreeView] = useState(false);
   const [activeDiffSide, setActiveDiffSide] = useState<'left' | 'right'>('left');
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadDone = useRef(false);
@@ -322,6 +329,22 @@ const Index = () => {
     swapDiffSides(activeTabId);
   }, [swapDiffSides, activeTabId]);
 
+  const handleToggleFoldAll = useCallback(() => {
+    if (isAllFolded) {
+      unfoldAllRef.current?.();
+      treeViewRef.current?.expandAll();
+    } else {
+      foldAllRef.current?.();
+      treeViewRef.current?.collapseAll();
+    }
+  }, [isAllFolded]);
+
+  // Avoid showing a stale "Unfold All" state from the previous tab while the
+  // new tab's fold state is still being computed asynchronously.
+  useEffect(() => {
+    setIsAllFolded(false);
+  }, [activeTabId]);
+
   const handleDiffLeftChange = useCallback(
     (value: string) => updateDiffContent(activeTabId, 'left', value),
     [updateDiffContent, activeTabId]
@@ -361,6 +384,23 @@ const Index = () => {
     }
   })();
 
+  const jsonEditorElement = (
+    <JsonEditor
+      value={activeTab.content}
+      onChange={handleEditorChange}
+      theme={preferences.theme}
+      isValid={activeTab.isValid}
+      tabId={activeTabId}
+      onClear={handleClear}
+      onEditorReady={({ openCommandPalette, foldAll, unfoldAll }) => {
+        commandPaletteRef.current = openCommandPalette;
+        foldAllRef.current = foldAll;
+        unfoldAllRef.current = unfoldAll;
+      }}
+      onFoldStateChange={setIsAllFolded}
+    />
+  );
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
       <Header />
@@ -389,6 +429,10 @@ const Index = () => {
         isDiffMode={activeTab.isDiffMode}
         onToggleDiffMode={handleToggleDiffMode}
         onOpenCommandPalette={() => commandPaletteRef.current?.()}
+        onFoldAll={handleToggleFoldAll}
+        isAllFolded={isAllFolded}
+        isTreeView={showTreeView}
+        onToggleTreeView={() => setShowTreeView((v) => !v)}
       />
       <main className="flex-1 min-h-0 w-full flex flex-col" aria-label="JSON editor">
         {/* SEO: descriptive text for crawlers, visually hidden */}
@@ -422,18 +466,18 @@ const Index = () => {
               indentSize={preferences.indentSize}
               indentType={preferences.indentType}
             />
+          ) : showTreeView ? (
+            <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+              <ResizablePanel defaultSize={60} minSize={20}>
+                {jsonEditorElement}
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={40} minSize={20}>
+                <JsonTreeView ref={treeViewRef} content={activeTab.content} />
+              </ResizablePanel>
+            </ResizablePanelGroup>
           ) : (
-            <JsonEditor
-              value={activeTab.content}
-              onChange={handleEditorChange}
-              theme={preferences.theme}
-              isValid={activeTab.isValid}
-              tabId={activeTabId}
-              onClear={handleClear}
-              onEditorReady={({ openCommandPalette }) => {
-                commandPaletteRef.current = openCommandPalette;
-              }}
-            />
+            jsonEditorElement
           )}
         </div>
       </main>
