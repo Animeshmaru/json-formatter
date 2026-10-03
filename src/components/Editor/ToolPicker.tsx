@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Lock, ArrowRightLeft } from 'lucide-react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import {
@@ -19,6 +20,14 @@ interface ToolPickerProps {
   onSelectConverter: (id: string) => void;
 }
 
+function Kbd({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-sans text-[10px] text-foreground">
+      {children}
+    </kbd>
+  );
+}
+
 export function ToolPicker({ open, onOpenChange, onSelectEncoder, onSelectConverter }: ToolPickerProps) {
   const select = (fn: (id: string) => void, id: string) => {
     fn(id);
@@ -34,19 +43,6 @@ export function ToolPicker({ open, onOpenChange, onSelectEncoder, onSelectConver
       <CommandInput placeholder="Search tools..." />
       <CommandList>
         <CommandEmpty>No tools found.</CommandEmpty>
-        <CommandGroup heading="Encoders">
-          {ENCODERS.map((enc) => (
-            <CommandItem
-              key={enc.id}
-              value={enc.label}
-              onSelect={() => select(onSelectEncoder, enc.id)}
-              className="gap-2"
-            >
-              <Lock className="text-primary" />
-              {enc.label}
-            </CommandItem>
-          ))}
-        </CommandGroup>
         <CommandGroup heading="Converters">
           {CONVERTERS.map((conv) => (
             <CommandItem
@@ -60,7 +56,24 @@ export function ToolPicker({ open, onOpenChange, onSelectEncoder, onSelectConver
             </CommandItem>
           ))}
         </CommandGroup>
+        <CommandGroup heading="Encoders">
+          {ENCODERS.map((enc) => (
+            <CommandItem
+              key={enc.id}
+              value={enc.label}
+              onSelect={() => select(onSelectEncoder, enc.id)}
+              className="gap-2"
+            >
+              <Lock className="text-primary" />
+              {enc.label}
+            </CommandItem>
+          ))}
+        </CommandGroup>
       </CommandList>
+      <div className="flex items-center justify-end gap-1 border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
+        <Kbd>⌥</Kbd>
+        <Kbd>Space</Kbd> Toggle
+      </div>
     </CommandDialog>
   );
 }
