@@ -10,6 +10,7 @@ interface JsonEditorProps {
   theme: 'dark' | 'light';
   isValid: boolean;
   tabId: string;
+  language?: string;
   onClear?: () => void;
   onEditorReady?: (actions: { openCommandPalette: () => void; foldAll: () => void; unfoldAll: () => void }) => void;
   onFoldStateChange?: (allFolded: boolean) => void;
@@ -21,6 +22,7 @@ export function JsonEditor({
   theme,
   isValid,
   tabId,
+  language = 'json',
   onClear,
   onEditorReady,
   onFoldStateChange,
@@ -86,7 +88,7 @@ export function JsonEditor({
       >
         <MonacoEditor
           height="100%"
-          defaultLanguage="json"
+          language={language}
           path={`tab-${tabId}.json`}
           value={value}
           onChange={handleChange}

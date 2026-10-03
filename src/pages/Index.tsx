@@ -10,9 +10,13 @@ import { ErrorDisplay } from '@/components/Editor/ErrorDisplay';
 import { StatusBar } from '@/components/Editor/StatusBar';
 import { DiffMode } from '@/components/Editor/DiffMode';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { ToolMode } from '@/components/Editor/ToolMode';
+import { ToolPicker } from '@/components/Editor/ToolPicker';
+import { MarkdownPreview } from '@/components/Editor/MarkdownPreview';
 import { useTabs } from '@/hooks/useTabs';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { validateAndFormatJson, minifyJson } from '@/utils/jsonFormatter';
+import { getLanguageById } from '@/languageSupport';
 import { downloadJson, uploadJsonFile } from '@/utils/fileHandler';
 import {
   createShareableUrl,
@@ -21,6 +25,7 @@ import {
   clearUrlParams,
 } from '@/utils/shareUrl';
 import { toast } from 'sonner';
+import type { EditorLanguage, SecondaryMode } from '@/types';
 
 const Index = () => {
   const {
@@ -39,7 +44,9 @@ const Index = () => {
     clearActiveTab,
     updatePreferences,
     reorderTabs,
-    toggleDiffMode,
+    setSecondaryMode,
+    applySecondaryTool,
+    setTabLanguage,
     updateDiffContent,
     swapDiffSides,
   } = useTabs();
@@ -51,6 +58,7 @@ const Index = () => {
   const [isAllFolded, setIsAllFolded] = useState(false);
   const [isMinified, setIsMinified] = useState(false);
   const [showTreeView, setShowTreeView] = useState(false);
+  const [isToolPickerOpen, setIsToolPickerOpen] = useState(false);
   const [activeDiffSide, setActiveDiffSide] = useState<'left' | 'right'>('left');
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadDone = useRef(false);
@@ -62,20 +70,16 @@ const Index = () => {
 
     const jsonFromUrl = getJsonFromUrl();
     if (jsonFromUrl) {
-      const result = validateAndFormatJson(
-        jsonFromUrl,
-        preferences.indentSize,
-        preferences.indentType
-      );
-      if (result.isValid && result.formattedJson) {
-        addTab('Shared JSON', result.formattedJson);
+      const result = validateAndFormatJson(jsonFromUrl);
+      if (result.isValid) {
+        addTab('Shared JSON', jsonFromUrl);
         clearUrlParams();
         toast.success('JSON loaded from shared link');
       } else {
         toast.error('Invalid JSON in shared link');
       }
     }
-  }, [addTab, preferences.indentSize, preferences.indentType]);
+  }, [addTab]);
 
   const handleEditorChange = useCallback(
     (value: string) => {
@@ -86,37 +90,17 @@ const Index = () => {
       }
 
       debounceRef.current = setTimeout(() => {
-        if (preferences.autoFormat && value.trim()) {
-          const result = validateAndFormatJson(
-            value,
-            preferences.indentSize,
-            preferences.indentType
-          );
-          if (result.isValid && result.formattedJson) {
-            updateTabContent(activeTabId, result.formattedJson, true);
-            setIsMinified(false);
-          } else {
-            updateTabContent(activeTabId, value, true);
-          }
-        } else {
-          updateTabContent(activeTabId, value, true);
-        }
+        updateTabContent(activeTabId, value, true);
       }, 300);
     },
-    [
-      activeTabId,
-      preferences.autoFormat,
-      preferences.indentSize,
-      preferences.indentType,
-      updateTabContent,
-    ]
+    [activeTabId, updateTabContent]
   );
 
   const handleFormat = useCallback(() => {
-    if (activeTab.isDiffMode) {
+    if (activeTab.secondaryMode === 'diff') {
       const content = activeDiffSide === 'left' ? activeTab.diffLeft : activeTab.diffRight;
       if (!content.trim()) return;
-      const result = validateAndFormatJson(content, preferences.indentSize, preferences.indentType);
+      const result = validateAndFormatJson(content);
       if (result.formattedJson) {
         updateDiffContent(activeTabId, activeDiffSide, result.formattedJson);
       }
@@ -124,22 +108,21 @@ const Index = () => {
     } else {
       formatActiveTab();
       setIsMinified(false);
-      toast.success('JSON formatted');
+      toast.success(`${getLanguageById(activeTab.language).label} formatted`);
     }
   }, [
     formatActiveTab,
-    activeTab.isDiffMode,
+    activeTab.secondaryMode,
+    activeTab.language,
     activeDiffSide,
     activeTab.diffLeft,
     activeTab.diffRight,
-    preferences.indentSize,
-    preferences.indentType,
     updateDiffContent,
     activeTabId,
   ]);
 
   const handleCopy = useCallback(() => {
-    if (activeTab.isDiffMode) {
+    if (activeTab.secondaryMode === 'diff') {
       const content = activeDiffSide === 'left' ? activeTab.diffLeft : activeTab.diffRight;
       copyToClipboard(content);
     } else {
@@ -147,24 +130,24 @@ const Index = () => {
     }
   }, [
     activeTab.content,
-    activeTab.isDiffMode,
+    activeTab.secondaryMode,
     activeDiffSide,
     activeTab.diffLeft,
     activeTab.diffRight,
   ]);
 
   const handleDownload = useCallback(() => {
-    if (activeTab.isDiffMode) {
+    if (activeTab.secondaryMode === 'diff') {
       const content = activeDiffSide === 'left' ? activeTab.diffLeft : activeTab.diffRight;
       downloadJson(content, `${activeTab.name}-${activeDiffSide}`);
     } else {
       downloadJson(activeTab.content, activeTab.name);
     }
-    toast.success('JSON downloaded');
+    toast.success('Downloaded');
   }, [
     activeTab.content,
     activeTab.name,
-    activeTab.isDiffMode,
+    activeTab.secondaryMode,
     activeDiffSide,
     activeTab.diffLeft,
     activeTab.diffRight,
@@ -173,21 +156,21 @@ const Index = () => {
   const handleUpload = useCallback(async () => {
     try {
       const { content, filename } = await uploadJsonFile();
-      const result = validateAndFormatJson(content, preferences.indentSize, preferences.indentType);
-      if (activeTab.isDiffMode) {
+      if (activeTab.secondaryMode === 'diff') {
+        const result = validateAndFormatJson(content);
         updateDiffContent(activeTabId, activeDiffSide, result.formattedJson ?? content);
         toast.success(`File uploaded to ${activeDiffSide} editor`);
       } else {
-        addTab(filename, result.formattedJson ?? content);
+        addTab(filename, content);
         toast.success('File uploaded');
       }
     } catch (e) {
       toast.error('Failed to upload file');
     }
-  }, [addTab, preferences.indentSize, preferences.indentType, activeTab.isDiffMode, activeDiffSide, updateDiffContent, activeTabId]);
+  }, [addTab, activeTab.secondaryMode, activeDiffSide, updateDiffContent, activeTabId]);
 
   const handleShare = useCallback(() => {
-    if (activeTab.isDiffMode) {
+    if (activeTab.secondaryMode === 'diff') {
       const content = activeDiffSide === 'left' ? activeTab.diffLeft : activeTab.diffRight;
       const url = createShareableUrl(content);
       copyToClipboard(url);
@@ -198,21 +181,17 @@ const Index = () => {
     toast.success('Shareable link copied to clipboard');
   }, [
     activeTab.content,
-    activeTab.isDiffMode,
+    activeTab.secondaryMode,
     activeDiffSide,
     activeTab.diffLeft,
     activeTab.diffRight,
   ]);
 
   const handleMinify = useCallback(() => {
-    if (activeTab.isDiffMode) {
+    if (activeTab.secondaryMode === 'diff') {
       const content = activeDiffSide === 'left' ? activeTab.diffLeft : activeTab.diffRight;
       if (isMinified) {
-        const result = validateAndFormatJson(
-          content,
-          preferences.indentSize,
-          preferences.indentType
-        );
+        const result = validateAndFormatJson(content);
         if (result.formattedJson) {
           updateDiffContent(activeTabId, activeDiffSide, result.formattedJson);
         }
@@ -238,17 +217,15 @@ const Index = () => {
     activeTab.content,
     updateTabContent,
     activeTabId,
-    activeTab.isDiffMode,
+    activeTab.secondaryMode,
     activeDiffSide,
     activeTab.diffLeft,
     activeTab.diffRight,
-    preferences.indentSize,
-    preferences.indentType,
     updateDiffContent,
   ]);
 
   const handleClear = useCallback(() => {
-    if (activeTab.isDiffMode) {
+    if (activeTab.secondaryMode === 'diff') {
       const prev = activeDiffSide === 'left' ? activeTab.diffLeft : activeTab.diffRight;
       updateDiffContent(activeTabId, activeDiffSide, '');
       const side = activeDiffSide === 'left' ? 'Left' : 'Right';
@@ -321,9 +298,25 @@ const Index = () => {
     [tabs, closeTab, restoreTab, updateTabContent]
   );
 
-  const handleToggleDiffMode = useCallback(() => {
-    toggleDiffMode(activeTabId);
-  }, [toggleDiffMode, activeTabId]);
+  const handleSetSecondaryMode = useCallback(
+    (mode: SecondaryMode) => setSecondaryMode(activeTabId, mode),
+    [setSecondaryMode, activeTabId]
+  );
+
+  const handleSetLanguage = useCallback(
+    (language: EditorLanguage) => setTabLanguage(activeTabId, language),
+    [setTabLanguage, activeTabId]
+  );
+
+  const handleApplyEncoder = useCallback(
+    (id: string) => applySecondaryTool(activeTabId, 'encoder', id),
+    [applySecondaryTool, activeTabId]
+  );
+
+  const handleApplyConverter = useCallback(
+    (id: string) => applySecondaryTool(activeTabId, 'converter', id),
+    [applySecondaryTool, activeTabId]
+  );
 
   const handleSwapDiffSides = useCallback(() => {
     swapDiffSides(activeTabId);
@@ -361,20 +354,21 @@ const Index = () => {
     onCloseTab: () => handleCloseTab(activeTabId),
     onClear: handleClear,
     onDuplicate: () => duplicateTab(activeTabId),
+    onOpenToolPicker: () => setIsToolPickerOpen(true),
   });
 
   const lineCount = activeTab.content.split('\n').length;
   const charCount = activeTab.content.length;
 
   // Compute toolbar props based on mode
-  const toolbarContent = activeTab.isDiffMode
+  const toolbarContent = activeTab.secondaryMode === 'diff'
     ? activeDiffSide === 'left'
       ? activeTab.diffLeft
       : activeTab.diffRight
     : activeTab.content;
   const toolbarHasContent = toolbarContent.length > 0;
   const toolbarIsValid = (() => {
-    if (!activeTab.isDiffMode) return activeTab.isValid;
+    if (activeTab.secondaryMode !== 'diff') return activeTab.isValid;
     if (!toolbarContent.trim()) return true;
     try {
       JSON.parse(toolbarContent);
@@ -391,6 +385,7 @@ const Index = () => {
       theme={preferences.theme}
       isValid={activeTab.isValid}
       tabId={activeTabId}
+      language={getLanguageById(activeTab.language).monacoLanguageId}
       onClear={handleClear}
       onEditorReady={({ openCommandPalette, foldAll, unfoldAll }) => {
         commandPaletteRef.current = openCommandPalette;
@@ -403,7 +398,12 @@ const Index = () => {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
-      <Header />
+      <Header
+        theme={preferences.theme}
+        onToggleTheme={() =>
+          updatePreferences({ theme: preferences.theme === 'dark' ? 'light' : 'dark' })
+        }
+      />
       <TabBar
         tabs={tabs}
         activeTabId={activeTabId}
@@ -412,6 +412,7 @@ const Index = () => {
         onRenameTab={renameTab}
         onAddTab={() => addTab()}
         onReorderTabs={reorderTabs}
+        onOpenCommandPalette={() => commandPaletteRef.current?.()}
       />
       <EditorToolbar
         onFormat={handleFormat}
@@ -424,15 +425,23 @@ const Index = () => {
         isMinified={isMinified}
         isValid={toolbarIsValid}
         hasContent={toolbarHasContent}
-        preferences={preferences}
-        onPreferencesChange={updatePreferences}
-        isDiffMode={activeTab.isDiffMode}
-        onToggleDiffMode={handleToggleDiffMode}
-        onOpenCommandPalette={() => commandPaletteRef.current?.()}
+        language={activeTab.language}
+        onSetLanguage={handleSetLanguage}
+        secondaryMode={activeTab.secondaryMode}
+        onSetSecondaryMode={handleSetSecondaryMode}
+        encoderId={activeTab.encoderId}
+        converterId={activeTab.converterId}
+        onOpenToolPicker={() => setIsToolPickerOpen(true)}
         onFoldAll={handleToggleFoldAll}
         isAllFolded={isAllFolded}
         isTreeView={showTreeView}
         onToggleTreeView={() => setShowTreeView((v) => !v)}
+      />
+      <ToolPicker
+        open={isToolPickerOpen}
+        onOpenChange={setIsToolPickerOpen}
+        onSelectEncoder={handleApplyEncoder}
+        onSelectConverter={handleApplyConverter}
       />
       <main className="flex-1 min-h-0 w-full flex flex-col" aria-label="JSON editor">
         {/* SEO: descriptive text for crawlers, visually hidden */}
@@ -442,7 +451,7 @@ const Index = () => {
           and download. All processing happens in your browser — no data is ever sent to a server.
         </p>
         <div className="flex-1 min-h-0">
-          {activeTab.isDiffMode ? (
+          {activeTab.secondaryMode === 'diff' ? (
             <DiffMode
               leftContent={activeTab.diffLeft}
               rightContent={activeTab.diffRight}
@@ -463,9 +472,34 @@ const Index = () => {
               diffOnlyView={preferences.diffOnlyView}
               onDiffOnlyViewChange={(value) => updatePreferences({ diffOnlyView: value })}
               onSwapSides={handleSwapDiffSides}
-              indentSize={preferences.indentSize}
-              indentType={preferences.indentType}
+              indentSize={2}
+              language={activeTab.language}
             />
+          ) : activeTab.secondaryMode === 'encoder' || activeTab.secondaryMode === 'converter' ? (
+            <ToolMode
+              content={activeTab.content}
+              onContentChange={handleEditorChange}
+              mode={activeTab.secondaryMode}
+              toolId={activeTab.secondaryMode === 'encoder' ? activeTab.encoderId : activeTab.converterId}
+              language={getLanguageById(activeTab.language).monacoLanguageId}
+              theme={preferences.theme}
+              tabId={activeTabId}
+            />
+          ) : activeTab.language === 'markdown' ? (
+            <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+              <ResizablePanel defaultSize={50} minSize={20}>
+                <div className="flex flex-col h-full min-h-0">
+                  <div className="flex items-center h-8 px-3 text-xs font-medium bg-card border-b border-border text-muted-foreground">
+                    Source
+                  </div>
+                  <div className="flex-1 min-h-0">{jsonEditorElement}</div>
+                </div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={50} minSize={20}>
+                <MarkdownPreview content={activeTab.content} />
+              </ResizablePanel>
+            </ResizablePanelGroup>
           ) : showTreeView ? (
             <ResizablePanelGroup direction="horizontal" className="h-full w-full">
               <ResizablePanel defaultSize={60} minSize={20}>
@@ -481,11 +515,14 @@ const Index = () => {
           )}
         </div>
       </main>
-      {!activeTab.isDiffMode && activeTab.error && <ErrorDisplay error={activeTab.error} />}
+      {activeTab.secondaryMode === 'none' && activeTab.error && (
+        <ErrorDisplay error={activeTab.error} />
+      )}
       <StatusBar
-        isValid={!activeTab.isDiffMode && activeTab.isValid}
-        charCount={!activeTab.isDiffMode ? charCount : 0}
-        lineCount={!activeTab.isDiffMode ? lineCount : 0}
+        isValid={activeTab.secondaryMode === 'none' && activeTab.isValid}
+        charCount={activeTab.secondaryMode === 'none' ? charCount : 0}
+        lineCount={activeTab.secondaryMode === 'none' ? lineCount : 0}
+        languageLabel={getLanguageById(activeTab.language).label}
       />
     </div>
   );

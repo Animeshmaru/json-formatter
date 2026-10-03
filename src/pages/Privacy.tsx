@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 const Privacy = () => {
   useEffect(() => {
     const prev = document.title;
-    document.title = 'Privacy Policy — Multi JSON Formatter';
+    document.title = 'Privacy Policy — Multi JSON Workspace';
     return () => {
       document.title = prev;
     };

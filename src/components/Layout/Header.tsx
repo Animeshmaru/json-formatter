@@ -1,7 +1,12 @@
 import { Link } from 'react-router-dom';
-import { FileStack, Lock, Info } from 'lucide-react';
+import { FileStack, Lock, Info, Sun, Moon } from 'lucide-react';
 
-export function Header() {
+interface HeaderProps {
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
+}
+
+export function Header({ theme, onToggleTheme }: HeaderProps) {
   return (
     <header className="flex items-center justify-between px-4 py-3 bg-card border-b border-border">
       <Link to="/" className="flex items-center gap-2.5">
@@ -10,26 +15,34 @@ export function Header() {
         </div>
         <div className="flex flex-col">
           <h1 className="text-base font-semibold text-foreground leading-none m-0">
-            Multi JSON Formatter
+            Multi JSON Workspace
           </h1>
           <span className="text-xs text-muted-foreground">Fast, private, offline</span>
         </div>
       </Link>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <Link
           to="/about"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          title="About"
         >
           <Info className="h-4 w-4 text-primary" />
-          About
         </Link>
         <Link
           to="/privacy"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          title="Privacy"
         >
           <Lock className="h-4 w-4 text-primary" />
-          Privacy
         </Link>
+        <button
+          type="button"
+          onClick={onToggleTheme}
+          className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+        >
+          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
       </div>
     </header>
   );

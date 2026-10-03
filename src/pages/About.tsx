@@ -17,7 +17,7 @@ const features = [
   {
     icon: Zap,
     title: 'Format & Beautify',
-    desc: 'Instantly pretty-print JSON with configurable 2-space, 4-space or tab indentation.',
+    desc: 'Instantly pretty-print JSON with clean, consistent 2-space indentation.',
   },
   {
     icon: CheckCircle,
@@ -77,7 +77,7 @@ const faqs = [
 const About = () => {
   useEffect(() => {
     const prev = document.title;
-    document.title = 'About — Multi JSON Formatter';
+    document.title = 'About — Multi JSON Workspace';
     return () => {
       document.title = prev;
     };
@@ -105,7 +105,7 @@ const About = () => {
 
         <div className="mb-8 p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground">Multi JSON Formatter</strong> is a free, open-source
+            <strong className="text-foreground">Multi JSON Workspace</strong> is a free, open-source
             JSON formatter, validator, and beautifier that runs entirely in your browser. No
             sign-up, no ads, no tracking — just fast JSON tooling for developers.
           </p>

@@ -3,10 +3,7 @@ import { AppState, Tab, EditorPreferences } from '@/types';
 const STORAGE_KEY = 'json-formatter-state';
 
 const defaultPreferences: EditorPreferences = {
-  indentSize: 2,
-  indentType: 'spaces',
   theme: 'dark',
-  autoFormat: false,
   diffUnified: false,
   diffIgnoreKeyOrder: false,
   diffIgnoreArrayOrder: false,
@@ -20,9 +17,12 @@ const createDefaultTab = (): Tab => ({
   content: '',
   isValid: true,
   error: null,
-  isDiffMode: false,
+  language: 'json',
+  secondaryMode: 'none',
   diffLeft: '',
   diffRight: '',
+  encoderId: null,
+  converterId: null,
 });
 
 export function getStoredState(): AppState {
@@ -36,13 +36,20 @@ export function getStoredState(): AppState {
         state.tabs = [defaultTab];
         state.activeTabId = defaultTab.id;
       }
-      // Backfill new diff fields on tabs loaded from older storage
-      state.tabs = state.tabs.map((t) => ({
-        ...t,
-        isDiffMode: t.isDiffMode ?? false,
-        diffLeft: t.diffLeft ?? '',
-        diffRight: t.diffRight ?? '',
-      }));
+      // Backfill new fields on tabs loaded from older storage. Older storage may have
+      // a legacy `isDiffMode: boolean` field (pre-dating `secondaryMode`) — migrate it.
+      state.tabs = state.tabs.map((t) => {
+        const legacy = t as unknown as { isDiffMode?: boolean };
+        return {
+          ...t,
+          language: t.language ?? 'json',
+          secondaryMode: t.secondaryMode ?? (legacy.isDiffMode ? 'diff' : 'none'),
+          diffLeft: t.diffLeft ?? '',
+          diffRight: t.diffRight ?? '',
+          encoderId: t.encoderId ?? null,
+          converterId: t.converterId ?? null,
+        };
+      });
       // Merge stored preferences with defaults for new fields
       state.preferences = { ...defaultPreferences, ...state.preferences };
       return state;

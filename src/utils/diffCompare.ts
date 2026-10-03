@@ -1,4 +1,4 @@
-import { stripJsonComments } from './jsonFormatter';
+import type { LanguageDefinition } from '@/languageSupport';
 
 export interface NormalizeOptions {
   ignoreKeyOrder: boolean;
@@ -49,22 +49,22 @@ export function stripValuesForKeysOnly(value: unknown): unknown {
   return null;
 }
 
-export function normalizeJsonForDiff(
+export function normalizeForDiff(
   content: string,
   opts: NormalizeOptions,
-  indentSize: number = 2,
-  indentType: 'spaces' | 'tabs' = 'spaces'
+  language: LanguageDefinition,
+  indentSize: number = 2
 ): string {
   if (!content.trim()) return content;
+  if (!language.supportsStructuralDiff || !language.parse || !language.stringify) return content;
   try {
-    let parsed = JSON.parse(stripJsonComments(content));
+    let parsed = language.parse(content);
     if (opts.keysOnly) parsed = stripValuesForKeysOnly(parsed);
     const canonical = canonicalizeValue(parsed, {
       sortKeys: opts.ignoreKeyOrder,
       sortArrays: opts.ignoreArrayOrder,
     });
-    const indent = indentType === 'tabs' ? '\t' : ' '.repeat(indentSize);
-    return JSON.stringify(canonical, null, indent);
+    return language.stringify(canonical, indentSize);
   } catch {
     return content;
   }

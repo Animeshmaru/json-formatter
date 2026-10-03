@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Command } from 'lucide-react';
 import { Tab } from '@/types';
 import { TabItem } from './TabItem';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -14,6 +14,7 @@ interface TabBarProps {
   onRenameTab: (id: string, name: string) => void;
   onAddTab: () => void;
   onReorderTabs: (fromIndex: number, toIndex: number) => void;
+  onOpenCommandPalette?: () => void;
 }
 
 export function TabBar({
@@ -24,6 +25,7 @@ export function TabBar({
   onRenameTab,
   onAddTab,
   onReorderTabs,
+  onOpenCommandPalette,
 }: TabBarProps) {
   const dragIndex = useRef<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
@@ -89,9 +91,17 @@ export function TabBar({
             variant="ghost"
             size="icon"
             onClick={onAddTab}
-            className="h-8 w-8 mx-2 text-muted-foreground hover:text-foreground hover:bg-secondary flex-shrink-0"
+            className="h-8 w-8 ml-2 text-muted-foreground hover:text-foreground hover:bg-secondary flex-shrink-0"
             title="New tab (Ctrl/Cmd + T)">
             <Plus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onOpenCommandPalette}
+            className="h-8 w-8 mx-2 text-muted-foreground hover:text-foreground hover:bg-secondary flex-shrink-0"
+            title="Command Palette (F1)">
+            <Command className="h-4 w-4" />
           </Button>
         </div>
         <ScrollBar orientation="horizontal" className="hidden" />

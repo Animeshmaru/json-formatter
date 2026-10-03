@@ -1,19 +1,22 @@
+export type EditorLanguage = 'json' | 'yaml' | 'xml' | 'markdown';
+export type SecondaryMode = 'none' | 'diff' | 'encoder' | 'converter';
+
 export interface Tab {
   id: string;
   name: string;
   content: string;
   isValid: boolean;
   error: string | null;
-  isDiffMode: boolean;
+  language: EditorLanguage;
+  secondaryMode: SecondaryMode;
   diffLeft: string;
   diffRight: string;
+  encoderId: string | null;
+  converterId: string | null;
 }
 
 export interface EditorPreferences {
-  indentSize: 2 | 4;
-  indentType: 'spaces' | 'tabs';
   theme: 'dark' | 'light';
-  autoFormat: boolean;
   diffUnified: boolean;
   diffIgnoreKeyOrder: boolean;
   diffIgnoreArrayOrder: boolean;

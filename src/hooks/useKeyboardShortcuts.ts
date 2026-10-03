@@ -6,13 +6,20 @@ interface ShortcutHandlers {
   onCloseTab: () => void;
   onClear: () => void;
   onDuplicate: () => void;
+  onOpenToolPicker: () => void;
 }
 
 export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.code === 'Space') {
+        e.preventDefault();
+        handlers.onOpenToolPicker();
+        return;
+      }
+
       const isMod = e.metaKey || e.ctrlKey;
-      
+
       if (!isMod) return;
 
       switch (e.key.toLowerCase()) {

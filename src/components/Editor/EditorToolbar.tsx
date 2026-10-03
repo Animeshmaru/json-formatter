@@ -7,15 +7,15 @@ import {
   Minimize2,
   Maximize2,
   Check,
-  Settings2,
-  Moon,
-  Sun,
   Wand2,
   GitCompareArrows,
-  Command,
   FoldVertical,
   UnfoldVertical,
   ListTree,
+  Braces,
+  Wrench,
+  ChevronDown,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,13 +23,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { useState } from 'react';
-import { EditorPreferences } from '@/types';
+import { EditorLanguage, SecondaryMode } from '@/types';
+import { LANGUAGES, getLanguageById } from '@/languageSupport';
+import { getEncoderById } from '@/toolsData/encoders';
+import { getConverterById } from '@/toolsData/converters';
 import { toast } from 'sonner';
 
 interface EditorToolbarProps {
@@ -43,11 +43,13 @@ interface EditorToolbarProps {
   isMinified: boolean;
   isValid: boolean;
   hasContent: boolean;
-  preferences: EditorPreferences;
-  onPreferencesChange: (updates: Partial<EditorPreferences>) => void;
-  isDiffMode: boolean;
-  onToggleDiffMode: () => void;
-  onOpenCommandPalette?: () => void;
+  language: EditorLanguage;
+  onSetLanguage: (language: EditorLanguage) => void;
+  secondaryMode: SecondaryMode;
+  onSetSecondaryMode: (mode: SecondaryMode) => void;
+  encoderId: string | null;
+  converterId: string | null;
+  onOpenToolPicker: () => void;
   onFoldAll?: () => void;
   isAllFolded?: boolean;
   isTreeView?: boolean;
@@ -65,11 +67,13 @@ export function EditorToolbar({
   isMinified,
   isValid,
   hasContent,
-  preferences,
-  onPreferencesChange,
-  isDiffMode,
-  onToggleDiffMode,
-  onOpenCommandPalette,
+  language,
+  onSetLanguage,
+  secondaryMode,
+  onSetSecondaryMode,
+  encoderId,
+  converterId,
+  onOpenToolPicker,
   onFoldAll,
   isAllFolded,
   isTreeView,
@@ -83,6 +87,12 @@ export function EditorToolbar({
     toast.success('Copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const isDiffMode = secondaryMode === 'diff';
+  const isEncoderMode = secondaryMode === 'encoder';
+  const isConverterMode = secondaryMode === 'converter';
+  const activeEncoder = encoderId ? getEncoderById(encoderId) : undefined;
+  const activeConverter = converterId ? getConverterById(converterId) : undefined;
 
   return (
     <div className="flex items-center gap-1 px-3 py-1 bg-card border-b border-border">
@@ -120,7 +130,7 @@ export function EditorToolbar({
         variant="ghost"
         size="sm"
         onClick={onFoldAll}
-        disabled={!hasContent || !isValid || isDiffMode}
+        disabled={!hasContent || !isValid || secondaryMode !== 'none'}
         className="gap-1.5 text-xs font-medium"
         title={isAllFolded ? 'Unfold all' : 'Collapse all'}
       >
@@ -154,13 +164,7 @@ export function EditorToolbar({
         )}
       </Button>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onUpload}
-        className="h-8 w-8"
-        title="Upload"
-      >
+      <Button variant="ghost" size="icon" onClick={onUpload} className="h-8 w-8" title="Upload">
         <Upload className="h-4 w-4 text-primary" />
       </Button>
 
@@ -202,7 +206,7 @@ export function EditorToolbar({
       <Button
         variant={isDiffMode ? 'secondary' : 'ghost'}
         size="sm"
-        onClick={onToggleDiffMode}
+        onClick={() => onSetSecondaryMode(isDiffMode ? 'none' : 'diff')}
         className={`gap-1.5 text-xs font-medium ${
           isDiffMode ? 'bg-primary/15 text-primary border border-primary/30' : ''
         }`}
@@ -215,7 +219,7 @@ export function EditorToolbar({
         variant={isTreeView ? 'secondary' : 'ghost'}
         size="sm"
         onClick={onToggleTreeView}
-        disabled={!hasContent || isDiffMode}
+        disabled={!hasContent || secondaryMode !== 'none'}
         className={`gap-1.5 text-xs font-medium ${
           isTreeView ? 'bg-primary/15 text-primary border border-primary/30' : ''
         }`}
@@ -226,82 +230,59 @@ export function EditorToolbar({
 
       <div className="flex-1" />
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onOpenCommandPalette}
-        className="h-8 w-8"
-        title="Command Palette (F1)"
-      >
-        <Command className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() =>
-          onPreferencesChange({ theme: preferences.theme === 'dark' ? 'light' : 'dark' })
-        }
-        className="h-8 w-8"
-      >
-        {preferences.theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      </Button>
-
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Settings2 className="h-4 w-4" />
+          <Button variant="ghost" size="sm" className="gap-1.5 text-xs font-medium">
+            <Braces className="h-4 w-4 text-primary" />
+            Formatter: {getLanguageById(language).label}
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52 bg-card border border-border shadow-md">
+        <DropdownMenuContent align="end" className="w-48 bg-card border border-border shadow-md">
           <DropdownMenuLabel className="text-muted-foreground text-xs font-semibold">
-            Indent Size
+            Formatter
           </DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={`${preferences.indentSize}`}
-            onValueChange={(v) => onPreferencesChange({ indentSize: parseInt(v) as 2 | 4 })}
-          >
-            <DropdownMenuRadioItem
-              value="2"
-              className="focus:text-primary focus:bg-secondary focus:bg-secondary"
+          {LANGUAGES.map((lang) => (
+            <DropdownMenuItem
+              key={lang.id}
+              onClick={() => onSetLanguage(lang.id)}
+              className="focus:text-primary focus:bg-secondary"
             >
-              2 spaces
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem
-              value="4"
-              className="focus:text-primary focus:bg-secondary focus:bg-secondary"
-            >
-              4 spaces
-            </DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Indent Type</DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={preferences.indentType}
-            onValueChange={(v) => onPreferencesChange({ indentType: v as 'spaces' | 'tabs' })}
-          >
-            <DropdownMenuRadioItem
-              value="spaces"
-              className="focus:text-primary focus:bg-secondary focus:bg-secondary"
-            >
-              Spaces
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem
-              value="tabs"
-              className="focus:text-primary focus:bg-secondary focus:bg-secondary"
-            >
-              Tabs
-            </DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => onPreferencesChange({ autoFormat: !preferences.autoFormat })}
-            className="focus:text-primary focus:bg-secondary focus:bg-secondary"
-          >
-            {preferences.autoFormat ? '✓ ' : ''}Auto-format on paste
-          </DropdownMenuItem>
+              {language === lang.id ? '✓ ' : ''}
+              {lang.label}
+            </DropdownMenuItem>
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <Button
+        variant={isEncoderMode || isConverterMode ? 'secondary' : 'ghost'}
+        size="sm"
+        onClick={onOpenToolPicker}
+        className={`gap-1.5 text-xs font-medium ${
+          isEncoderMode || isConverterMode ? 'bg-primary/15 text-primary border border-primary/30' : ''
+        }`}
+        title="Tools (Alt+Space)"
+      >
+        <Wrench className="h-4 w-4 text-primary" />
+        {isEncoderMode && activeEncoder
+          ? `Tools: ${activeEncoder.label}`
+          : isConverterMode && activeConverter
+            ? `Tools: ${activeConverter.label}`
+            : 'Tools'}
+      </Button>
+
+      {(isEncoderMode || isConverterMode) && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onSetSecondaryMode('none')}
+          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          title="Turn off tool"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 }

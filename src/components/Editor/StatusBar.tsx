@@ -16,9 +16,10 @@ interface StatusBarProps {
   isValid: boolean;
   charCount: number;
   lineCount: number;
+  languageLabel?: string;
 }
 
-export function StatusBar({ isValid, charCount, lineCount }: StatusBarProps) {
+export function StatusBar({ isValid, charCount, lineCount, languageLabel = 'JSON' }: StatusBarProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -29,7 +30,7 @@ export function StatusBar({ isValid, charCount, lineCount }: StatusBarProps) {
         {isValid && charCount > 0 && (
           <span className="flex items-center gap-1 text-success">
             <CheckCircle2 className="h-3 w-3" />
-            Valid JSON
+            Valid {languageLabel}
           </span>
         )}
       </div>

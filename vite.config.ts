@@ -18,4 +18,11 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    // Without this, Vite's dep scanner crawls every .html file under the
+    // project root, including the unrelated mcp-server/ sibling project's
+    // apps — which pulls in a second copy of React and breaks hooks
+    // ("Invalid hook call") across the whole dev server.
+    entries: ["index.html"],
+  },
 }));

@@ -13,7 +13,9 @@ import {
 } from 'lucide-react';
 import type { editor as MonacoEditor } from 'monaco-editor';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
-import { normalizeJsonForDiff } from '@/utils/diffCompare';
+import { normalizeForDiff } from '@/utils/diffCompare';
+import { getLanguageById } from '@/languageSupport';
+import type { EditorLanguage } from '@/types';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -47,7 +49,7 @@ interface DiffModeProps {
   onDiffOnlyViewChange: (value: boolean) => void;
   onSwapSides: () => void;
   indentSize: number;
-  indentType: 'spaces' | 'tabs';
+  language: EditorLanguage;
 }
 
 export function DiffMode({
@@ -71,32 +73,35 @@ export function DiffMode({
   onDiffOnlyViewChange,
   onSwapSides,
   indentSize,
-  indentType,
+  language,
 }: DiffModeProps) {
   const handleLeftChange = useCallback((value: string) => onLeftChange(value), [onLeftChange]);
 
   const handleRightChange = useCallback((value: string) => onRightChange(value), [onRightChange]);
 
+  const languageDef = getLanguageById(language);
+  const supportsStructuralDiff = languageDef.supportsStructuralDiff;
+
   const normalizeOpts = useMemo(
     () => ({ ignoreKeyOrder, ignoreArrayOrder, keysOnly }),
     [ignoreKeyOrder, ignoreArrayOrder, keysOnly]
   );
-  const hasNormalization = ignoreKeyOrder || ignoreArrayOrder || keysOnly;
+  const hasNormalization = supportsStructuralDiff && (ignoreKeyOrder || ignoreArrayOrder || keysOnly);
 
   const diffOriginal = useMemo(
     () =>
       hasNormalization
-        ? normalizeJsonForDiff(leftContent, normalizeOpts, indentSize, indentType)
+        ? normalizeForDiff(leftContent, normalizeOpts, languageDef, indentSize)
         : leftContent,
-    [leftContent, hasNormalization, normalizeOpts, indentSize, indentType]
+    [leftContent, hasNormalization, normalizeOpts, languageDef, indentSize]
   );
 
   const diffModified = useMemo(
     () =>
       hasNormalization
-        ? normalizeJsonForDiff(rightContent, normalizeOpts, indentSize, indentType)
+        ? normalizeForDiff(rightContent, normalizeOpts, languageDef, indentSize)
         : rightContent,
-    [rightContent, hasNormalization, normalizeOpts, indentSize, indentType]
+    [rightContent, hasNormalization, normalizeOpts, languageDef, indentSize]
   );
 
   // Monaco's hideUnchangedRegions preserves each region's prior collapsed/expanded state
@@ -240,7 +245,7 @@ export function DiffMode({
                   activeSide === 'left' ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
-                Left JSON
+                Left
               </button>
               <div className="flex-1 min-h-0">
                 <JsonEditor
@@ -249,6 +254,7 @@ export function DiffMode({
                   theme={theme}
                   isValid={true}
                   tabId={`${tabId}-diff-left`}
+                  language={languageDef.monacoLanguageId}
                 />
               </div>
             </div>
@@ -265,7 +271,7 @@ export function DiffMode({
                   activeSide === 'right' ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
-                Right JSON
+                Right
               </button>
               <div className="flex-1 min-h-0">
                 <JsonEditor
@@ -274,6 +280,7 @@ export function DiffMode({
                   theme={theme}
                   isValid={true}
                   tabId={`${tabId}-diff-right`}
+                  language={languageDef.monacoLanguageId}
                 />
               </div>
             </div>
@@ -330,53 +337,57 @@ export function DiffMode({
                   <ArrowLeftRight className="h-3.5 w-3.5" />
                   Swap
                 </button>
-                <div className="h-3 w-px bg-border" />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                {supportsStructuralDiff && (
+                  <>
+                    <div className="h-3 w-px bg-border" />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors border ${
+                            ignoreKeyOrder || ignoreArrayOrder
+                              ? 'bg-primary/15 text-primary border-primary/30'
+                              : 'border-transparent text-muted-foreground hover:text-foreground'
+                          }`}
+                          title="Ignore ordering when comparing"
+                        >
+                          <ListOrdered className="h-3 w-3" />
+                          Ignore order
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56 bg-card border border-border shadow-md">
+                        <DropdownMenuLabel className="text-muted-foreground text-xs font-semibold">
+                          Ignore order
+                        </DropdownMenuLabel>
+                        <DropdownMenuCheckboxItem
+                          checked={ignoreKeyOrder}
+                          onCheckedChange={onIgnoreKeyOrderChange}
+                          className="cursor-pointer focus:bg-transparent focus:text-primary"
+                        >
+                          Ignore key order
+                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuCheckboxItem
+                          checked={ignoreArrayOrder}
+                          onCheckedChange={onIgnoreArrayOrderChange}
+                          className="cursor-pointer focus:bg-transparent focus:text-primary"
+                        >
+                          Ignore array order
+                        </DropdownMenuCheckboxItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <button
+                      onClick={() => onKeysOnlyChange(!keysOnly)}
                       className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors border ${
-                        ignoreKeyOrder || ignoreArrayOrder
+                        keysOnly
                           ? 'bg-primary/15 text-primary border-primary/30'
                           : 'border-transparent text-muted-foreground hover:text-foreground'
                       }`}
-                      title="Ignore ordering when comparing"
+                      title="Only compare key/structure presence, ignore value differences"
                     >
-                      <ListOrdered className="h-3 w-3" />
-                      Ignore order
+                      <KeyRound className="h-3 w-3" />
+                      Keys only
                     </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 bg-card border border-border shadow-md">
-                    <DropdownMenuLabel className="text-muted-foreground text-xs font-semibold">
-                      Ignore order
-                    </DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem
-                      checked={ignoreKeyOrder}
-                      onCheckedChange={onIgnoreKeyOrderChange}
-                      className="cursor-pointer focus:bg-transparent focus:text-primary"
-                    >
-                      Ignore key order
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={ignoreArrayOrder}
-                      onCheckedChange={onIgnoreArrayOrderChange}
-                      className="cursor-pointer focus:bg-transparent focus:text-primary"
-                    >
-                      Ignore array order
-                    </DropdownMenuCheckboxItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <button
-                  onClick={() => onKeysOnlyChange(!keysOnly)}
-                  className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors border ${
-                    keysOnly
-                      ? 'bg-primary/15 text-primary border-primary/30'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
-                  title="Only compare key/structure presence, ignore value differences"
-                >
-                  <KeyRound className="h-3 w-3" />
-                  Keys only
-                </button>
+                  </>
+                )}
                 <div className="h-3 w-px bg-border" />
                 <button
                   onClick={() => onDiffOnlyViewChange(!diffOnlyView)}
@@ -432,7 +443,7 @@ export function DiffMode({
                 <MonacoDiffEditor
                   key={remountKey}
                   height="100%"
-                  language="json"
+                  language={languageDef.monacoLanguageId}
                   original={diffOriginal}
                   modified={diffModified}
                   theme={theme === 'dark' ? 'vs-dark' : 'light'}

@@ -1,4 +1,4 @@
-# JSON Formatter
+# Multi JSON Workspace
 
 A lightweight, privacy-first JSON formatter web app for developers. Format, validate, and share JSON instantly — all client-side with zero tracking.
 
