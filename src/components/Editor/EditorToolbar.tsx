@@ -25,12 +25,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { EditorLanguage, SecondaryMode } from '@/types';
 import { LANGUAGES, getLanguageById } from '@/languageSupport';
 import { getEncoderById } from '@/toolsData/encoders';
 import { getConverterById } from '@/toolsData/converters';
 import { toast } from 'sonner';
+
+const TOOLS_HINT_SEEN_KEY = 'json-formatter:tools-hint-seen';
 
 interface EditorToolbarProps {
   onFormat: () => void;
@@ -80,6 +82,36 @@ export function EditorToolbar({
   onToggleTreeView,
 }: EditorToolbarProps) {
   const [copied, setCopied] = useState(false);
+  const [showToolsHint, setShowToolsHint] = useState(() => {
+    try {
+      return localStorage.getItem(TOOLS_HINT_SEEN_KEY) !== '1';
+    } catch {
+      return true;
+    }
+  });
+
+  const dismissToolsHint = () => {
+    setShowToolsHint(false);
+    try {
+      localStorage.setItem(TOOLS_HINT_SEEN_KEY, '1');
+    } catch {
+      // localStorage unavailable (e.g. private browsing) — hint just won't persist as dismissed
+    }
+  };
+
+  const handleOpenToolPicker = () => {
+    if (showToolsHint) dismissToolsHint();
+    onOpenToolPicker();
+  };
+
+  // Also dismiss if the user discovers the picker via the Alt+Space shortcut
+  // (which bypasses the click handler above) and actually applies a tool.
+  useEffect(() => {
+    if ((secondaryMode === 'encoder' || secondaryMode === 'converter') && showToolsHint) {
+      dismissToolsHint();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [secondaryMode]);
 
   const handleCopy = () => {
     onCopy();
@@ -255,22 +287,29 @@ export function EditorToolbar({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Button
-        variant={isEncoderMode || isConverterMode ? 'secondary' : 'ghost'}
-        size="sm"
-        onClick={onOpenToolPicker}
-        className={`gap-1.5 text-xs font-medium ${
-          isEncoderMode || isConverterMode ? 'bg-primary/15 text-primary border border-primary/30' : ''
-        }`}
-        title="Tools (Alt+Space)"
-      >
-        <Wrench className="h-4 w-4 text-primary" />
-        {isEncoderMode && activeEncoder
-          ? `Tools: ${activeEncoder.label}`
-          : isConverterMode && activeConverter
-            ? `Tools: ${activeConverter.label}`
-            : 'Tools'}
-      </Button>
+      <div className="relative">
+        <Button
+          variant={isEncoderMode || isConverterMode ? 'secondary' : 'ghost'}
+          size="sm"
+          onClick={handleOpenToolPicker}
+          className={`gap-1.5 text-xs font-medium ${
+            isEncoderMode || isConverterMode ? 'bg-primary/15 text-primary border border-primary/30' : ''
+          }`}
+          title="Tools (Alt+Space)"
+        >
+          <Wrench className="h-4 w-4 text-primary" />
+          {isEncoderMode && activeEncoder
+            ? `Tools: ${activeEncoder.label}`
+            : isConverterMode && activeConverter
+              ? `Tools: ${activeConverter.label}`
+              : 'Tools'}
+        </Button>
+        {showToolsHint && (
+          <span className="pointer-events-none absolute -top-1.5 -right-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-semibold leading-none text-primary-foreground shadow-sm animate-pulse-subtle">
+            New
+          </span>
+        )}
+      </div>
 
       {(isEncoderMode || isConverterMode) && (
         <Button
