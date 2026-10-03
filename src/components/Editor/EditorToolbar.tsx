@@ -99,21 +99,6 @@ export function EditorToolbar({
       <Button
         variant="ghost"
         size="sm"
-        onClick={handleCopy}
-        disabled={!hasContent || !isValid}
-        className="gap-1.5 text-xs font-medium"
-      >
-        {copied ? (
-          <Check className="h-4 w-4 text-success" />
-        ) : (
-          <Copy className="h-4 w-4 text-primary" />
-        )}
-        Copy
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="sm"
         onClick={onMinify}
         disabled={!hasContent || !isValid}
         className="gap-1.5 text-xs font-medium"
@@ -154,42 +139,62 @@ export function EditorToolbar({
 
       <div className="h-4 w-[2px] bg-border mx-1" />
 
-      <Button variant="ghost" size="sm" onClick={onUpload} className="gap-1.5 text-xs font-medium">
-        <Upload className="h-4 w-4 text-primary" />
-        Upload
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleCopy}
+        disabled={!hasContent || !isValid}
+        className="h-8 w-8"
+        title="Copy"
+      >
+        {copied ? (
+          <Check className="h-4 w-4 text-success" />
+        ) : (
+          <Copy className="h-4 w-4 text-primary" />
+        )}
       </Button>
 
       <Button
         variant="ghost"
-        size="sm"
+        size="icon"
+        onClick={onUpload}
+        className="h-8 w-8"
+        title="Upload"
+      >
+        <Upload className="h-4 w-4 text-primary" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={onDownload}
         disabled={!hasContent || !isValid}
-        className="gap-1.5 text-xs font-medium"
+        className="h-8 w-8"
+        title="Download"
       >
         <Download className="h-4 w-4 text-primary" />
-        Download
       </Button>
 
       <Button
         variant="ghost"
-        size="sm"
+        size="icon"
         onClick={onShare}
         disabled={!hasContent || !isValid}
-        className="gap-1.5 text-xs font-medium"
+        className="h-8 w-8"
+        title="Share"
       >
         <Share2 className="h-4 w-4 text-primary" />
-        Share
       </Button>
 
       <Button
         variant="ghost"
-        size="sm"
+        size="icon"
         onClick={onClear}
         disabled={!hasContent}
-        className="gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive"
+        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+        title="Clear"
       >
         <Trash2 className="h-4 w-4" />
-        Clear
       </Button>
 
       <div className="h-4 w-[2px] bg-border mx-1" />
